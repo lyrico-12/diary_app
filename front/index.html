@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タイムリミット日記</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- ログイン・登録画面 -->
+        <div id="auth-screen" class="screen">
+            <div class="auth-container">
+                <h1>タイムリミット日記</h1>
+                <p class="tagline">制限時間と文字数で創造性を引き出す</p>
+                
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">ログイン</button>
+                    <button class="auth-tab" data-tab="register">新規登録</button>
+                </div>
+                
+                <div id="login-form" class="auth-form active">
+                    <div class="form-group">
+                        <label for="login-username">ユーザー名</label>
+                        <input type="text" id="login-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">パスワード</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button id="login-btn" class="btn primary-btn">ログイン</button>
+                    <p id="login-error" class="error-message"></p>
+                </div>
+                
+                <div id="register-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="register-username">ユーザー名</label>
+                        <input type="text" id="register-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">メールアドレス</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">パスワード</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <button id="register-btn" class="btn primary-btn">登録する</button>
+                    <p id="register-error" class="error-message"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- メイン画面 -->
+        <div id="main-screen" class="screen hidden">
+            <!-- ナビゲーションバー -->
+            <nav class="navbar">
+                <div class="nav-brand">タイムリミット日記</div>
+                <div class="nav-links">
+                    <button id="nav-home" class="nav-link active"><i class="fas fa-home"></i> ホーム</button>
+                    <button id="nav-my-diaries" class="nav-link"><i class="fas fa-book"></i> 自分の日記</button>
+                    <button id="nav-friends" class="nav-link"><i class="fas fa-user-friends"></i> フレンド</button>
+                    <button id="nav-notifications" class="nav-link"><i class="fas fa-bell"></i> <span id="notification-badge" class="badge hidden">0</span></button>
+                </div>
+                <div class="nav-user">
+                    <span id="user-name"></span>
+                    <span id="streak-count"><i class="fas fa-fire"></i> <span id="streak-number">0</span></span>
+                    <button id="logout-btn" class="btn small-btn">ログアウト</button>
+                </div>
+            </nav>
+            
+            <!-- コンテンツエリア -->
+            <div class="content-area">
+                <!-- ホーム画面（フィード） -->
+                <div id="home-content" class="content active">
+                    <div class="content-header">
+                        <h2>フレンドの日記</h2>
+                        <button id="new-diary-btn" class="btn primary-btn"><i class="fas fa-plus"></i> 新しい日記</button>
+                    </div>
+                    
+                    <div id="diary-feed" class="diary-feed">
+                        <!-- 日記カードはJSで動的に生成 -->
+                        <p class="empty-state">まだ表示できる日記がありません。<br>フレンドを追加するか、自分で投稿してみましょう！</p>
+                    </div>
+                </div>
+                
+                <!-- 自分の日記一覧 -->
+                <div id="my-diaries-content" class="content hidden">
+                    <div class="content-header">
+                        <h2>自分の日記一覧</h2>
+                    </div>
+                    
+                    <div class="diary-calendar">
+                        <div class="calendar-header">
+                            <button id="prev-month" class="btn small-btn"><i class="fas fa-chevron-left"></i></button>
+                            <h3 id="calendar-title">2023年6月</h3>
+                            <button id="next-month" class="btn small-btn"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid">
+                            <!-- カレンダーはJSで動的に生成 -->
+                        </div>
+                    </div>
+                    
+                    <div id="my-diary-list" class="diary-list">
+                        <!-- 日記リストはJSで動的に生成 -->
+                        <p class="empty-state">まだ日記を書いていません。<br>右上の「新しい日記」ボタンから投稿してみましょう！</p>
+                    </div>
+                </div>
+                
+                <!-- フレンド画面 -->
+                <div id="friends-content" class="content hidden">
+                    <div class="content-header">
+                        <h2>フレンド</h2>
+                    </div>
+                    
+                    <div class="friend-tabs">
+                        <button class="friend-tab active" data-tab="friends-list">フレンド一覧</button>
+                        <button class="friend-tab" data-tab="friend-requests">フレンドリクエスト <span id="request-badge" class="badge hidden">0</span></button>
+                    </div>
+                    
+                    <div id="friends-list-content" class="friend-content active">
+                        <div class="friend-search">
+                            <input type="text" id="friend-search" placeholder="ユーザー名で検索...">
+                            <button id="search-btn" class="btn small-btn">検索</button>
+                        </div>
+                        
+                        <div id="friends-list" class="friends-list">
+                            <!-- フレンドリストはJSで動的に生成 -->
+                            <p class="empty-state">まだフレンドがいません。<br>検索してフレンドを探してみましょう！</p>
+                        </div>
+                    </div>
+                    
+                    <div id="friend-requests-content" class="friend-content hidden">
+                        <div id="friend-requests-list" class="friend-requests-list">
+                            <!-- フレンドリクエストはJSで動的に生成 -->
+                            <p class="empty-state">フレンドリクエストはありません。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 通知画面 -->
+                <div id="notifications-content" class="content hidden">
+                    <div class="content-header">
+                        <h2>通知</h2>
+                        <button id="mark-all-read-btn" class="btn small-btn">すべて既読にする</button>
+                    </div>
+                    
+                    <div id="notifications-list" class="notifications-list">
+                        <!-- 通知リストはJSで動的に生成 -->
+                        <p class="empty-state">通知はありません。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 日記作成画面 -->
+        <div id="diary-screen" class="screen hidden">
+            <div class="diary-container">
+                <div class="diary-header">
+                    <h2>新しい日記</h2>
+                    <div class="diary-rules">
+                        <div class="rule">
+                            <i class="fas fa-clock"></i> 制限時間: <span id="time-limit">3分</span>
+                        </div>
+                        <div class="rule">
+                            <i class="fas fa-font"></i> 最大文字数: <span id="char-limit">200文字</span>
+                        </div>
+                    </div>
+                    <div class="timer" id="timer">03:00</div>
+                </div>
+                
+                <div class="diary-editor">
+                    <input type="text" id="diary-title" placeholder="タイトル（任意）" maxlength="50">
+                    <div class="textarea-container">
+                        <textarea id="diary-content" placeholder="今日はどんな1日でしたか？"></textarea>
+                        <div class="char-counter">
+                            <span id="char-count">0</span>/<span id="max-chars">200</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="diary-footer">
+                    <button id="cancel-diary-btn" class="btn secondary-btn">キャンセル</button>
+                    <button id="submit-diary-btn" class="btn primary-btn">投稿する</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 日記詳細画面 -->
+        <div id="diary-detail-screen" class="screen hidden">
+            <div class="diary-detail-container">
+                <div class="diary-detail-header">
+                    <button id="back-btn" class="btn small-btn"><i class="fas fa-arrow-left"></i> 戻る</button>
+                    <div class="diary-meta">
+                        <span id="detail-author"></span>
+                        <span id="detail-date"></span>
+                    </div>
+                </div>
+                
+                <div class="diary-detail-content">
+                    <h2 id="detail-title"></h2>
+                    <p id="detail-content"></p>
+                </div>
+                
+                <div class="diary-detail-footer">
+                    <div class="diary-stats">
+                        <span class="diary-stat"><i class="fas fa-eye"></i> <span id="view-count">0</span>人が閲覧</span>
+                        <span class="diary-stat"><i class="fas fa-heart"></i> <span id="like-count">0</span>いいね</span>
+                    </div>
+                    <div class="diary-rules-small">
+                        <span class="rule-small">制限時間: <span id="detail-time-limit"></span></span>
+                        <span class="rule-small">文字数制限: <span id="detail-char-limit"></span></span>
+                    </div>
+                    <button id="like-btn" class="btn like-btn"><i class="far fa-heart"></i> いいね</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/auth.js"></script>
+    <script src="js/diary.js"></script>
+    <script src="js/friends.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

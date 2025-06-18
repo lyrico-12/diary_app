@@ -1,0 +1,45 @@
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from ..core.database import Base
+from datetime import datetime, timedelta
+
+class Diary(Base):
+    __tablename__ = "diaries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String, nullable=True)
+    content = Column(Text)
+    time_limit_sec = Column(Integer)  # 書く時の制限時間
+    char_limit = Column(Integer)      # 書く時の文字数制限
+    view_limit_duration_sec = Column(Integer)  # 公開後の閲覧可能時間
+    view_count = Column(Integer, default=0)
+    like_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=func.now())
+    
+    # リレーションシップ
+    user = relationship("User", backref="diaries")
+    
+    # 公開終了時間を計算するプロパティ
+    @property
+    def view_end_time(self):
+        return self.created_at + timedelta(seconds=self.view_limit_duration_sec)
+    
+    # 現在公開中かどうかを判定するプロパティ
+    @property
+    def is_viewable(self):
+        return datetime.now() <= self.view_end_time
+
+
+class DiaryLike(Base):
+    __tablename__ = "diary_likes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    diary_id = Column(Integer, ForeignKey("diaries.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=func.now())
+    
+    # リレーションシップ
+    diary = relationship("Diary", backref="likes")
+    user = relationship("User", backref="diary_likes")

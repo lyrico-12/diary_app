@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .core.database import Base, engine
+from .api.routes import auth_router, diary_router, friend_router, user_router
+
+# データベーステーブルの作成
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="タイムリミット日記アプリ",
@@ -8,18 +13,23 @@ app = FastAPI(
 )
 
 # CORSの設定
+# 開発環境では特定のオリジンを許可
 origins = [
-    "http://localhost",
     "http://localhost:8080",
-    "http://localhost:3000",
+    "http://127.0.0.1:8080",
+    "http://[::]:8080",
+    "http://[::1]:8080"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex="http://.*",  # 任意のHTTPオリジンを許可
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 # ヘルスチェック用エンドポイント
@@ -27,8 +37,7 @@ app.add_middleware(
 async def root():
     return {"message": "タイムリミット日記アプリAPI"}
 
-# APIルーターのインポートと登録は後で追加
-# from app.api.routes import diary, auth, friend
-# app.include_router(auth.router)
-# app.include_router(diary.router)
-# app.include_router(friend.router)
+# APIルーターの登録
+app.include_router(auth_router)
+app.include_router(diary_router)
+app.include_router(friend_router)
