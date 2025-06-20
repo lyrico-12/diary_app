@@ -41,3 +41,4 @@ async def root():
 app.include_router(auth_router)
 app.include_router(diary_router)
 app.include_router(friend_router)
+app.include_router(user_router)
