@@ -11,9 +11,15 @@ function checkAuth() {
         document.getElementById('user-name').textContent = currentUser?.username || '';
         document.getElementById('streak-number').textContent = currentUser?.streak_count || '0';
         loadInitialData();
+        if (typeof loadFriends === 'function') loadFriends();
+        if (typeof loadFriendRequests === 'function') loadFriendRequests();
     } else {
         document.getElementById('main-screen').classList.add('hidden');
         document.getElementById('auth-screen').classList.remove('hidden');
+        const friendsList = document.getElementById('friends-list');
+        if (friendsList) friendsList.innerHTML = '';
+        const friendRequestsList = document.getElementById('friend-requests-list');
+        if (friendRequestsList) friendRequestsList.innerHTML = '';
     }
 }
 
@@ -136,6 +142,10 @@ function logout() {
     currentUser = null;
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
+    const friendsList = document.getElementById('friends-list');
+    if (friendsList) friendsList.innerHTML = '';
+    const friendRequestsList = document.getElementById('friend-requests-list');
+    if (friendRequestsList) friendRequestsList.innerHTML = '';
     checkAuth();
 }
 
