@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 class Diary(Base):
     __tablename__ = "diaries"
@@ -29,7 +29,12 @@ class Diary(Base):
     # 現在公開中かどうかを判定するプロパティ
     @property
     def is_viewable(self):
-        return datetime.now() <= self.view_end_time
+        now_utc = datetime.now(timezone.utc)
+        created_utc = self.created_at
+        if created_utc.tzinfo is None:
+            created_utc = created_utc.replace(tzinfo=timezone.utc)
+        view_end_time = created_utc + timedelta(seconds=self.view_limit_duration_sec)
+        return now_utc <= view_end_time
 
 
 class DiaryLike(Base):
