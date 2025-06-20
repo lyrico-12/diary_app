@@ -40,6 +40,13 @@ def get_friend_diaries(db: Session, user_id: int, friend_ids: List[int], skip: i
         Diary.is_viewable == True
     ).order_by(Diary.created_at.desc()).offset(skip).limit(limit).all()
 
+def get_specific_friend_diaries(db: Session, friend_id: int, skip: int = 0, limit: int = 20):
+    """特定のフレンドの公開中の日記一覧を取得する"""
+    return db.query(Diary).filter(
+        Diary.user_id == friend_id,
+        Diary.is_viewable == True
+    ).order_by(Diary.created_at.desc()).offset(skip).limit(limit).all()
+
 def create_diary(db: Session, diary: DiaryCreate, user_id: int):
     """新しい日記を作成する"""
     db_diary = Diary(

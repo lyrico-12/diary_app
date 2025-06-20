@@ -154,6 +154,25 @@ def get_friend_ids(db: Session, user_id: int):
     friends = get_friends(db, user_id)
     return [friend.id for friend in friends]
 
+def are_friends(db: Session, user_id_1: int, user_id_2: int):
+    """2人のユーザーがフレンド関係にあるかをチェック"""
+    # 自分自身はフレンドではない
+    if user_id_1 == user_id_2:
+        return False
+    
+    # 承認済みのリクエストが存在するかチェック
+    request = db.query(FriendRequest).filter(
+        and_(
+            or_(
+                and_(FriendRequest.from_user_id == user_id_1, FriendRequest.to_user_id == user_id_2),
+                and_(FriendRequest.from_user_id == user_id_2, FriendRequest.to_user_id == user_id_1)
+            ),
+            FriendRequest.status == "accepted"
+        )
+    ).first()
+    
+    return request is not None
+
 def create_notification(db: Session, user_id: int, message: str, type: str, related_id: Optional[int] = None):
     """通知を作成"""
     db_notification = Notification(

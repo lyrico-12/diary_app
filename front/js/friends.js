@@ -69,24 +69,149 @@ function createFriendCard(friend) {
 // フレンドの日記一覧を表示
 async function viewFriendDiaries(friendId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/friend/${friendId}/diaries`, {
+        // フレンド情報を取得
+        const friendResponse = await fetch(`${API_BASE_URL}/users/${friendId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        let friendName = `フレンドID: ${friendId}`;
+        if (friendResponse.ok) {
+            const friendData = await friendResponse.json();
+            friendName = friendData.username;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/diary/friend/${friendId}`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
         
         if (!response.ok) {
-            throw new Error('フレンドの日記取得に失敗しました');
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'フレンドの日記取得に失敗しました');
         }
         
         const diaries = await response.json();
         
-        // ダイアログでフレンドの日記一覧を表示（モーダルウィンドウ実装は省略）
-        alert(`フレンドの日記 ${diaries.length} 件を表示します（実際の表示は実装中）`);
+        // フレンドの日記一覧を表示するモーダルを作成
+        showFriendDiariesModal(diaries, friendId, friendName);
         
     } catch (error) {
         console.error('Error viewing friend diaries:', error);
+        alert('フレンドの日記取得に失敗しました: ' + error.message);
     }
+}
+
+// フレンドの日記一覧モーダルを表示
+function showFriendDiariesModal(diaries, friendId, friendName) {
+    // 既存のモーダルがあれば削除
+    const existingModal = document.getElementById('friend-diaries-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // モーダルを作成
+    const modal = document.createElement('div');
+    modal.id = 'friend-diaries-modal';
+    modal.className = 'modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        width: 90%;
+    `;
+    
+    modalContent.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>${friendName}の日記</h2>
+            <button id="close-friend-diaries-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="friend-diaries-list">
+            ${diaries.length === 0 ? '<p class="empty-state">まだ日記がありません。</p>' : ''}
+        </div>
+    `;
+    
+    // 日記一覧を表示
+    const diariesList = modalContent.querySelector('#friend-diaries-list');
+    if (diaries.length > 0) {
+        diaries.forEach(diary => {
+            const diaryCard = createDiaryCard(diary);
+            diariesList.appendChild(diaryCard);
+        });
+    }
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // 閉じるボタンのイベント
+    modal.querySelector('#close-friend-diaries-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // モーダル外クリックで閉じる
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// 日記カードを作成
+function createDiaryCard(diary) {
+    const card = document.createElement('div');
+    card.className = 'diary-card';
+    card.style.cssText = `
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f9f9f9;
+    `;
+    
+    const createdAt = new Date(diary.created_at);
+    const formattedDate = `${createdAt.getFullYear()}/${(createdAt.getMonth() + 1).toString().padStart(2, '0')}/${createdAt.getDate().toString().padStart(2, '0')} ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
+    
+    card.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <h3 style="margin: 0 0 5px 0; color: #333;">${diary.title}</h3>
+            <p style="margin: 0; color: #666; font-size: 0.9em;">${formattedDate}</p>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <p style="margin: 0; line-height: 1.5;">${diary.content.substring(0, 200)}${diary.content.length > 200 ? '...' : ''}</p>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #666;">
+            <span>制限時間: ${diary.time_limit_sec}秒</span>
+            <span>文字数制限: ${diary.char_limit}文字</span>
+            <span>閲覧数: ${diary.view_count}</span>
+            <span>いいね: ${diary.like_count}</span>
+        </div>
+    `;
+    
+    // カードクリックで詳細表示
+    card.addEventListener('click', () => {
+        viewDiaryDetail(diary.id);
+    });
+    
+    return card;
 }
 
 // フレンドリクエストの読み込み

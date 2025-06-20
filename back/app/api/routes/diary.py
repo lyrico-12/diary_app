@@ -9,7 +9,7 @@ from ...crud.diary import (
     get_diary, get_diary_by_user, get_user_diaries, get_public_diaries,
     get_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
 )
-from ...crud.friend import get_friend_ids, create_notification
+from ...crud.friend import get_friend_ids, create_notification, are_friends
 from ...utils.diary_rules import generate_random_rules
 
 router = APIRouter(
@@ -64,6 +64,22 @@ def read_friend_diaries(
     """フレンドの公開中の日記一覧を取得する（閲覧可能時間内のもの）"""
     friend_ids = get_friend_ids(db, current_user.id)
     diaries = get_friend_diaries(db, current_user.id, friend_ids, skip=skip, limit=limit)
+    return diaries
+
+@router.get("/friend/{friend_id}", response_model=List[DiaryResponse])
+def read_specific_friend_diaries(
+    friend_id: int,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """特定のフレンドの公開中の日記一覧を取得する（閲覧可能時間内のもの）"""
+    # フレンド関係をチェック
+    if not are_friends(db, current_user.id, friend_id):
+        raise HTTPException(status_code=403, detail="このユーザーの日記を閲覧する権限がありません")
+    
+    diaries = get_specific_friend_diaries(db, friend_id, skip=skip, limit=limit)
     return diaries
 
 @router.get("/{diary_id}", response_model=DiaryDetail)
