@@ -170,7 +170,8 @@ async function acceptFriendRequest(requestId) {
         });
         
         if (!response.ok) {
-            throw new Error('フレンドリクエストの承認に失敗しました');
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'フレンドリクエストの承認に失敗しました');
         }
         
         // リクエスト一覧を更新
@@ -179,8 +180,11 @@ async function acceptFriendRequest(requestId) {
         // フレンド一覧も更新
         await loadFriends();
         
+        alert('フレンドリクエストを承認しました');
+        
     } catch (error) {
         console.error('Error accepting friend request:', error);
+        alert('フレンドリクエストの承認に失敗しました: ' + error.message);
     }
 }
 
@@ -195,14 +199,18 @@ async function rejectFriendRequest(requestId) {
         });
         
         if (!response.ok) {
-            throw new Error('フレンドリクエストの拒否に失敗しました');
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'フレンドリクエストの拒否に失敗しました');
         }
         
         // リクエスト一覧を更新
         await loadFriendRequests();
         
+        alert('フレンドリクエストを拒否しました');
+        
     } catch (error) {
         console.error('Error rejecting friend request:', error);
+        alert('フレンドリクエストの拒否に失敗しました: ' + error.message);
     }
 }
 
@@ -217,10 +225,22 @@ async function sendFriendRequest(userId) {
         });
         
         if (!response.ok) {
-            throw new Error('フレンドリクエストの送信に失敗しました');
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'フレンドリクエストの送信に失敗しました');
         }
         
-        alert('フレンドリクエストを送信しました');
+        const result = await response.json();
+        
+        // リクエストのステータスに応じてメッセージを表示
+        if (result.status === 'accepted') {
+            alert('フレンドリクエストが承認されました！');
+            // フレンド一覧を更新
+            await loadFriends();
+        } else if (result.status === 'pending') {
+            alert('フレンドリクエストを送信しました');
+        } else {
+            alert('フレンドリクエストの処理が完了しました');
+        }
         
     } catch (error) {
         console.error('Error sending friend request:', error);
@@ -238,7 +258,8 @@ async function searchUsers(query) {
         });
         
         if (!response.ok) {
-            throw new Error('ユーザー検索に失敗しました');
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'ユーザー検索に失敗しました');
         }
         
         const users = await response.json();
@@ -279,6 +300,8 @@ async function searchUsers(query) {
         
     } catch (error) {
         console.error('Error searching users:', error);
+        const friendsListContainer = document.getElementById('friends-list');
+        friendsListContainer.innerHTML = `<p class="empty-state">検索エラー: ${error.message}</p>`;
     }
 }
 

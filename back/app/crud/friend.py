@@ -39,16 +39,31 @@ def create_friend_request(db: Session, from_user_id: int, to_user_id: int):
     # すでにリクエストが存在するか確認
     existing_request = get_friend_request_by_users(db, from_user_id, to_user_id)
     if existing_request:
+        # 既存のリクエストがある場合は、そのステータスを返す
         return existing_request
     
     # 相手からのリクエストが存在するか確認
     reverse_request = get_friend_request_by_users(db, to_user_id, from_user_id)
     if reverse_request:
-        # 相手からのリクエストがある場合は自動的に承認
-        reverse_request.status = "accepted"
-        db.commit()
-        db.refresh(reverse_request)
-        return reverse_request
+        if reverse_request.status == "pending":
+            # 相手からのリクエストがある場合は自動的に承認
+            reverse_request.status = "accepted"
+            db.commit()
+            db.refresh(reverse_request)
+            
+            # 承認通知を作成
+            create_notification(
+                db, 
+                to_user_id, 
+                f"フレンドリクエストが承認されました", 
+                "friend", 
+                from_user_id
+            )
+            
+            return reverse_request
+        else:
+            # 既に処理済みのリクエストがある場合は、そのまま返す
+            return reverse_request
     
     # 新しいリクエストを作成
     db_request = FriendRequest(
