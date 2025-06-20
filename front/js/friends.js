@@ -264,6 +264,13 @@ async function sendFriendRequest(userId) {
     try {
         console.log('フレンドリクエスト送信開始:', userId);
         
+        // ボタンを「申請中」に変更
+        const button = document.querySelector(`[data-id="${userId}"] .add-friend-btn`);
+        if (button) {
+            button.textContent = '申請中...';
+            button.disabled = true;
+        }
+        
         const response = await fetch(`${API_BASE_URL}/friend/request/${userId}`, {
             method: 'POST',
             headers: {
@@ -284,8 +291,18 @@ async function sendFriendRequest(userId) {
             alert('フレンドリクエストが承認されました！');
             // フレンド一覧を更新
             await loadFriends();
+            // 検索結果がある場合は更新
+            const searchQuery = document.getElementById('friend-search').value.trim();
+            if (searchQuery) {
+                await searchUsers(searchQuery);
+            }
         } else if (result.status === 'pending') {
             alert('フレンドリクエストを送信しました');
+            // ボタンを「申請中」に変更
+            if (button) {
+                button.textContent = '申請中';
+                button.disabled = true;
+            }
         } else {
             alert('フレンドリクエストの処理が完了しました');
         }
@@ -296,6 +313,13 @@ async function sendFriendRequest(userId) {
     } catch (error) {
         console.error('Error sending friend request:', error);
         alert('フレンドリクエストの送信に失敗しました: ' + error.message);
+        
+        // エラー時はボタンを元に戻す
+        const button = document.querySelector(`[data-id="${userId}"] .add-friend-btn`);
+        if (button) {
+            button.textContent = 'フレンド申請';
+            button.disabled = false;
+        }
     }
 }
 
@@ -315,6 +339,18 @@ async function searchUsers(query) {
         
         const users = await response.json();
         
+        // 送信済みのフレンドリクエストを取得
+        const sentRequestsResponse = await fetch(`${API_BASE_URL}/friend/requests?status=pending`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        let sentRequests = [];
+        if (sentRequestsResponse.ok) {
+            sentRequests = await sentRequestsResponse.json();
+        }
+        
         const friendsListContainer = document.getElementById('friends-list');
         
         // 検索結果をクリア
@@ -331,19 +367,26 @@ async function searchUsers(query) {
             card.className = 'friend-card';
             card.setAttribute('data-id', user.id);
             
+            // 送信済みのリクエストかどうかをチェック
+            const isRequestSent = sentRequests.some(request => request.to_user_id === user.id);
+            
             card.innerHTML = `
                 <div class="friend-info">
                     <div class="friend-name">${user.username}</div>
                 </div>
                 <div class="friend-actions">
-                    <button class="btn small-btn add-friend-btn">フレンド申請</button>
+                    <button class="btn small-btn add-friend-btn" ${isRequestSent ? 'disabled' : ''}>
+                        ${isRequestSent ? '申請中' : 'フレンド申請'}
+                    </button>
                 </div>
             `;
             
             // フレンド申請ボタンのクリックイベント
             card.querySelector('.add-friend-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
-                sendFriendRequest(user.id);
+                if (!isRequestSent) {
+                    sendFriendRequest(user.id);
+                }
             });
             
             friendsListContainer.appendChild(card);
