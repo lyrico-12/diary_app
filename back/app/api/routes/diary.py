@@ -7,7 +7,7 @@ from ...models.user import User
 from ...schemas.diary import DiaryCreate, DiaryResponse, DiaryDetail, DiaryRules, DiaryLikeResponse
 from ...crud.diary import (
     get_diary, get_diary_by_user, get_user_diaries, get_public_diaries,
-    get_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
+    get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
 )
 from ...crud.friend import get_friend_ids, create_notification, are_friends
 from ...utils.diary_rules import generate_random_rules
