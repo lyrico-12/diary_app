@@ -21,14 +21,38 @@ def get_friend_requests(db: Session, user_id: int, status: Optional[str] = None)
     query = db.query(FriendRequest).filter(FriendRequest.to_user_id == user_id)
     if status:
         query = query.filter(FriendRequest.status == status)
-    return query.all()
+    # 関連するユーザー情報も一緒に取得
+    requests = query.all()
+    
+    # 各リクエストに関連するユーザー情報を明示的に読み込む
+    for request in requests:
+        if not hasattr(request, '_from_user_loaded'):
+            request.from_user = db.query(User).filter(User.id == request.from_user_id).first()
+            request._from_user_loaded = True
+        if not hasattr(request, '_to_user_loaded'):
+            request.to_user = db.query(User).filter(User.id == request.to_user_id).first()
+            request._to_user_loaded = True
+    
+    return requests
 
 def get_sent_friend_requests(db: Session, user_id: int, status: Optional[str] = None):
     """ユーザーの送信したフレンドリクエスト一覧を取得"""
     query = db.query(FriendRequest).filter(FriendRequest.from_user_id == user_id)
     if status:
         query = query.filter(FriendRequest.status == status)
-    return query.all()
+    # 関連するユーザー情報も一緒に取得
+    requests = query.all()
+    
+    # 各リクエストに関連するユーザー情報を明示的に読み込む
+    for request in requests:
+        if not hasattr(request, '_from_user_loaded'):
+            request.from_user = db.query(User).filter(User.id == request.from_user_id).first()
+            request._from_user_loaded = True
+        if not hasattr(request, '_to_user_loaded'):
+            request.to_user = db.query(User).filter(User.id == request.to_user_id).first()
+            request._to_user_loaded = True
+    
+    return requests
 
 def create_friend_request(db: Session, from_user_id: int, to_user_id: int):
     """フレンドリクエストを作成"""

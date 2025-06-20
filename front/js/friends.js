@@ -3,6 +3,8 @@
 // フレンド一覧の読み込み
 async function loadFriends() {
     try {
+        console.log('フレンド一覧読み込み開始');
+        
         const response = await fetch(`${API_BASE_URL}/friend/list`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
@@ -14,6 +16,7 @@ async function loadFriends() {
         }
         
         const friends = await response.json();
+        console.log('フレンド一覧:', friends);
         
         const friendsListContainer = document.getElementById('friends-list');
         
@@ -25,11 +28,13 @@ async function loadFriends() {
             return;
         }
         
-        // フレンドカードを作成
+        // フレンドカードを作成（承認済みのフレンドのみ）
         friends.forEach(friend => {
             const card = createFriendCard(friend);
             friendsListContainer.appendChild(card);
         });
+        
+        console.log('フレンド一覧読み込み完了');
         
     } catch (error) {
         console.error('Error loading friends:', error);
@@ -87,29 +92,46 @@ async function viewFriendDiaries(friendId) {
 // フレンドリクエストの読み込み
 async function loadFriendRequests() {
     try {
+        console.log('フレンドリクエスト読み込み開始');
+        console.log('API_BASE_URL:', API_BASE_URL);
+        console.log('authToken:', authToken ? '存在します' : '存在しません');
+        
         const response = await fetch(`${API_BASE_URL}/friend/requests?status=pending`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
         
+        console.log('レスポンスステータス:', response.status);
+        console.log('レスポンスOK:', response.ok);
+        
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('エラーレスポンス:', errorText);
             throw new Error('フレンドリクエストの取得に失敗しました');
         }
         
         const requests = await response.json();
         
+        // デバッグログ
+        console.log('フレンドリクエスト:', requests);
+        console.log('リクエスト数:', requests.length);
+        
         const requestsListContainer = document.getElementById('friend-requests-list');
+        console.log('コンテナ要素:', requestsListContainer);
         
         // 空の状態メッセージをクリア
         requestsListContainer.innerHTML = '';
         
         if (requests.length === 0) {
+            console.log('リクエストが0件のため、空の状態メッセージを表示');
             requestsListContainer.innerHTML = '<p class="empty-state">フレンドリクエストはありません。</p>';
             // リクエストバッジを非表示
             document.getElementById('request-badge').classList.add('hidden');
             return;
         }
+        
+        console.log('リクエストアイテムを作成開始');
         
         // リクエストバッジを表示
         const badge = document.getElementById('request-badge');
@@ -117,25 +139,38 @@ async function loadFriendRequests() {
         badge.classList.remove('hidden');
         
         // リクエストアイテムを作成
-        requests.forEach(request => {
+        requests.forEach((request, index) => {
+            console.log(`リクエスト ${index + 1}:`, request);
             const item = createRequestItem(request);
             requestsListContainer.appendChild(item);
         });
         
+        console.log('フレンドリクエスト読み込み完了');
+        
     } catch (error) {
         console.error('Error loading friend requests:', error);
+        console.error('エラーの詳細:', error.message);
+        console.error('エラースタック:', error.stack);
     }
 }
 
 // フレンドリクエストアイテムの作成
 function createRequestItem(request) {
+    // デバッグログ
+    console.log('リクエストアイテム作成:', request);
+    console.log('from_user:', request.from_user);
+    console.log('from_user_id:', request.from_user_id);
+    
     const item = document.createElement('div');
     item.className = 'request-item';
     item.setAttribute('data-id', request.id);
     
+    // ユーザー名を取得（from_userが存在しない場合はIDを表示）
+    const username = request.from_user ? request.from_user.username : `ユーザーID: ${request.from_user_id}`;
+    
     item.innerHTML = `
         <div class="request-info">
-            <div class="request-name">${request.from_user?.username || 'ユーザー'}</div>
+            <div class="request-name">${username}</div>
             <div class="request-date">${formatDate(request.created_at)}</div>
         </div>
         <div class="request-actions">
@@ -162,6 +197,8 @@ function createRequestItem(request) {
 // フレンドリクエストを承認
 async function acceptFriendRequest(requestId) {
     try {
+        console.log('フレンドリクエスト承認開始:', requestId);
+        
         const response = await fetch(`${API_BASE_URL}/friend/accept/${requestId}`, {
             method: 'POST',
             headers: {
@@ -173,6 +210,9 @@ async function acceptFriendRequest(requestId) {
             const errorData = await response.json();
             throw new Error(errorData.detail || 'フレンドリクエストの承認に失敗しました');
         }
+        
+        const result = await response.json();
+        console.log('承認結果:', result);
         
         // リクエスト一覧を更新
         await loadFriendRequests();
@@ -191,6 +231,8 @@ async function acceptFriendRequest(requestId) {
 // フレンドリクエストを拒否
 async function rejectFriendRequest(requestId) {
     try {
+        console.log('フレンドリクエスト拒否開始:', requestId);
+        
         const response = await fetch(`${API_BASE_URL}/friend/reject/${requestId}`, {
             method: 'POST',
             headers: {
@@ -202,6 +244,9 @@ async function rejectFriendRequest(requestId) {
             const errorData = await response.json();
             throw new Error(errorData.detail || 'フレンドリクエストの拒否に失敗しました');
         }
+        
+        const result = await response.json();
+        console.log('拒否結果:', result);
         
         // リクエスト一覧を更新
         await loadFriendRequests();
@@ -217,6 +262,8 @@ async function rejectFriendRequest(requestId) {
 // フレンドリクエストを送信
 async function sendFriendRequest(userId) {
     try {
+        console.log('フレンドリクエスト送信開始:', userId);
+        
         const response = await fetch(`${API_BASE_URL}/friend/request/${userId}`, {
             method: 'POST',
             headers: {
@@ -230,6 +277,7 @@ async function sendFriendRequest(userId) {
         }
         
         const result = await response.json();
+        console.log('送信結果:', result);
         
         // リクエストのステータスに応じてメッセージを表示
         if (result.status === 'accepted') {
@@ -241,6 +289,9 @@ async function sendFriendRequest(userId) {
         } else {
             alert('フレンドリクエストの処理が完了しました');
         }
+        
+        // フレンドリクエスト一覧も更新
+        await loadFriendRequests();
         
     } catch (error) {
         console.error('Error sending friend request:', error);
@@ -336,43 +387,84 @@ async function checkFriendRequests() {
 
 // フレンドタブの切り替え
 function setupFriendTabs() {
+    console.log('フレンドタブ設定開始');
     const friendTabs = document.querySelectorAll('.friend-tab');
-    friendTabs.forEach(tab => {
+    console.log('フレンドタブ数:', friendTabs.length);
+    
+    friendTabs.forEach((tab, index) => {
+        console.log(`タブ ${index + 1}:`, tab.textContent, 'data-tab:', tab.getAttribute('data-tab'));
+        
         tab.addEventListener('click', () => {
+            console.log('タブクリック:', tab.textContent, 'data-tab:', tab.getAttribute('data-tab'));
+            
             // タブの切り替え
             friendTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             
             // コンテンツの表示切り替え
             const targetId = tab.getAttribute('data-tab') + '-content';
+            console.log('ターゲットID:', targetId);
+            
             document.querySelectorAll('.friend-content').forEach(content => {
                 content.classList.remove('active');
+                content.classList.add('hidden');
             });
-            document.getElementById(targetId).classList.add('active');
+            
+            const targetContent = document.getElementById(targetId);
+            console.log('ターゲットコンテンツ:', targetContent);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+                targetContent.classList.add('active');
+            }
+            
+            // タブに応じて適切なデータを読み込む
+            if (tab.getAttribute('data-tab') === 'friend-requests') {
+                console.log('フレンドリクエストタブがクリックされました。リクエスト一覧を更新します。');
+                loadFriendRequests();
+            } else if (tab.getAttribute('data-tab') === 'friends-list') {
+                console.log('フレンド一覧タブがクリックされました。フレンド一覧を更新します。');
+                loadFriends();
+            }
         });
     });
+    
+    console.log('フレンドタブ設定完了');
 }
 
 // フレンド関連のイベントリスナー設定
 function setupFriendListeners() {
+    console.log('フレンドリスナー設定開始');
+    
     // フレンドタブの切り替え
     setupFriendTabs();
     
     // 検索ボタン
-    document.getElementById('search-btn').addEventListener('click', () => {
-        const query = document.getElementById('friend-search').value.trim();
-        if (query) {
-            searchUsers(query);
-        }
-    });
-    
-    // 検索フィールドのEnterキー
-    document.getElementById('friend-search').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const query = e.target.value.trim();
+    const searchBtn = document.getElementById('search-btn');
+    console.log('検索ボタン:', searchBtn);
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            console.log('検索ボタンクリック');
+            const query = document.getElementById('friend-search').value.trim();
             if (query) {
                 searchUsers(query);
             }
-        }
-    });
+        });
+    }
+    
+    // 検索フィールドのEnterキー
+    const searchField = document.getElementById('friend-search');
+    console.log('検索フィールド:', searchField);
+    if (searchField) {
+        searchField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('検索フィールドでEnterキー押下');
+                const query = e.target.value.trim();
+                if (query) {
+                    searchUsers(query);
+                }
+            }
+        });
+    }
+    
+    console.log('フレンドリスナー設定完了');
 }
