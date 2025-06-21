@@ -29,12 +29,24 @@ class Diary(Base):
     # 現在公開中かどうかを判定するプロパティ
     @property
     def is_viewable(self):
-        now_utc = datetime.now(timezone.utc)
-        created_utc = self.created_at
-        if created_utc.tzinfo is None:
-            created_utc = created_utc.replace(tzinfo=timezone.utc)
-        view_end_time = created_utc + timedelta(seconds=self.view_limit_duration_sec)
-        return now_utc <= view_end_time
+        # 日本時間で統一して比較
+        jst = timezone(timedelta(hours=9))
+        now_jst = datetime.now(jst)
+        created_jst = self.created_at
+        
+        # created_atがタイムゾーン情報を持っていない場合は、日本時間として扱う
+        if created_jst.tzinfo is None:
+            created_jst = created_jst.replace(tzinfo=jst)
+        else:
+            # タイムゾーン情報がある場合は、日本時間に変換
+            created_jst = created_jst.astimezone(jst)
+        
+        view_end_time = created_jst + timedelta(seconds=self.view_limit_duration_sec)
+        is_viewable = now_jst <= view_end_time
+        
+        print(f"is_viewable計算 (JST): 日記ID={self.id}, 現在時刻JST={now_jst}, 作成時刻JST={created_jst}, 終了時刻JST={view_end_time}, 結果={is_viewable}")
+        
+        return is_viewable
 
 
 class DiaryLike(Base):

@@ -69,7 +69,8 @@ function createFriendCard(friend) {
 // フレンドの日記一覧を表示
 async function viewFriendDiaries(friendId) {
     try {
-        console.log('フレンドの日記取得開始:', friendId);
+        console.log('=== 特定フレンド日記取得開始 ===');
+        console.log('フレンドID:', friendId);
         
         // フレンド情報を取得
         const friendResponse = await fetch(`${API_BASE_URL}/users/${friendId}`, {
@@ -104,11 +105,18 @@ async function viewFriendDiaries(friendId) {
         }
         
         const diaries = await response.json();
-        console.log('取得した日記:', diaries);
-        console.log('日記数:', diaries.length);
+        console.log('取得した特定フレンドの日記:', diaries);
+        console.log('特定フレンドの日記数:', diaries.length);
+        
+        // 各日記のis_viewable状態をログ出力
+        diaries.forEach((diary, index) => {
+            console.log(`日記 ${index + 1} - ID: ${diary.id}, タイトル: ${diary.title}, is_viewable: ${diary.is_viewable}`);
+        });
         
         // フレンドの日記一覧を表示するモーダルを作成
         showFriendDiariesModal(diaries, friendId, friendName);
+        
+        console.log('=== 特定フレンド日記取得完了 ===');
         
     } catch (error) {
         console.error('Error viewing friend diaries:', error);

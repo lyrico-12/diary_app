@@ -301,6 +301,13 @@ body {
 .diary-author {
     color: var(--text-light);
     font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.diary-author.friend {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1em;
 }
 
 .diary-date {

@@ -6,17 +6,25 @@ let remainingTime = 0;
 // 日記フィードの読み込み
 async function loadDiaryFeed() {
     try {
+        console.log('=== フレンド日記フィード読み込み開始 ===');
+        
         const response = await fetch(`${API_BASE_URL}/diary/feed`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
         
+        console.log('フィードAPIレスポンス:', response.status);
+        
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('フィードAPIエラー:', errorText);
             throw new Error('日記の取得に失敗しました');
         }
         
         const diaries = await response.json();
+        console.log('取得したフレンド日記:', diaries);
+        console.log('フレンド日記数:', diaries.length);
         
         const feedContainer = document.getElementById('diary-feed');
         
@@ -24,15 +32,20 @@ async function loadDiaryFeed() {
         feedContainer.innerHTML = '';
         
         if (diaries.length === 0) {
+            console.log('フレンド日記が0件のため、空の状態メッセージを表示');
             feedContainer.innerHTML = '<p class="empty-state">まだ表示できる日記がありません。<br>フレンドを追加するか、自分で投稿してみましょう！</p>';
             return;
         }
         
+        console.log('フレンド日記カード作成開始');
         // 日記カードを作成
-        diaries.forEach(diary => {
+        diaries.forEach((diary, index) => {
+            console.log(`フレンド日記 ${index + 1}:`, diary);
             const card = createDiaryCard(diary);
             feedContainer.appendChild(card);
         });
+        console.log('フレンド日記カード作成完了');
+        console.log('=== フレンド日記フィード読み込み完了 ===');
         
     } catch (error) {
         console.error('Error loading diary feed:', error);
@@ -99,11 +112,16 @@ function createDiaryCard(diary) {
         card.appendChild(timeLeftElement);
     }
     
+    // フレンドの日記かどうかを判定
+    const isFriendDiary = diary.user_id !== currentUserId;
+    const authorClass = isFriendDiary ? 'diary-author friend' : 'diary-author';
+    const authorText = diary.user?.username || 'ユーザー';
+    
     // カード内容
     card.innerHTML += `
         <div class="diary-header">
             <div class="diary-title">${diary.title || '無題の日記'}</div>
-            <div class="diary-author">${diary.user?.username || 'ユーザー'}</div>
+            <div class="${authorClass}">${isFriendDiary ? '👤 ' : ''}${authorText}</div>
             <div class="diary-date">${formatDate(diary.created_at)}</div>
         </div>
         <div class="diary-preview">${diary.content}</div>
