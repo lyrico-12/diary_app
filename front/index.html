@@ -221,6 +221,20 @@
                     <button id="like-btn" class="btn like-btn"><i class="far fa-heart"></i> いいね</button>
                 </div>
             </div>
+
+            <!-- AIフィードバック機能 -->
+            <div id="feedback-section" class="hidden">
+                <div id="feedback-container" class="feedback-container hidden">
+                    <h4>AIからのフィードバック</h4>
+                    <p id="feedback-content"></p>
+                </div>
+                <button id="get-feedback-btn" class="btn btn-secondary">
+                    <i class="fas fa-robot"></i> AIからフィードバックをもらう
+                </button>
+                <p id="feedback-loading-state" class="feedback-loading hidden">
+                    フィードバックを生成中です...
+                </p>
+            </div>
         </div>
     </div>
 

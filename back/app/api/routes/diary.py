@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from ...core.database import get_db
@@ -11,6 +11,9 @@ from ...crud.diary import (
 )
 from ...crud.friend import get_friend_ids, create_notification
 from ...utils.diary_rules import generate_random_rules
+from app.services.gemini_service import generate_feedback_from_diary
+from app.crud import diary as crud_diary
+from app.models.diary import Feedback
 
 router = APIRouter(
     prefix="/diary",
@@ -146,3 +149,51 @@ def unlike_diary_endpoint(
     result = unlike_diary(db, diary_id, current_user.id)
     if not result:
         raise HTTPException(status_code=404, detail="いいねが見つかりません")
+
+@router.post("/{diary_id}/feedback", summary="日記のフィードバックを生成")
+async def create_diary_feedback(
+    diary_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    日記の内容を元にGemini APIでフィードバックを生成し、DBに保存する。
+    API呼び出しに時間がかかる可能性があるため、バックグラウンドタスクとして実行する。
+    """
+    db_diary = crud_diary.get_diary_by_user(db, user_id=current_user.id, diary_id=diary_id)
+    if not db_diary:
+        raise HTTPException(status_code=404, detail="日記が見つかりません")
+
+    # 既存のフィードバックがあればそれを返す
+    existing_feedback = db.query(Feedback).filter(Feedback.diary_id == diary_id).first()
+    if existing_feedback:
+        return {"message": "フィードバックは既に存在します。"}
+
+    def task():
+        feedback_content = generate_feedback_from_diary(db_diary.content)
+        db_feedback = Feedback(
+            diary_id=diary_id,
+            user_id=current_user.id,
+            content=feedback_content
+        )
+        db.add(db_feedback)
+        db.commit()
+
+    background_tasks.add_task(task)
+    
+    return {"message": "フィードバックの生成を開始しました。少し時間をおいてから再度確認してください。"}
+
+@router.get("/{diary_id}/feedback", summary="日記のフィードバックを取得")
+def get_diary_feedback(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    feedback = db.query(Feedback).filter(
+        Feedback.diary_id == diary_id,
+        Feedback.user_id == current_user.id
+    ).first()
+    if not feedback:
+        raise HTTPException(status_code=404, detail="フィードバックが見つかりません")
+    return feedback

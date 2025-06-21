@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -49,3 +49,14 @@ class DiaryLike(Base):
     # リレーションシップ
     diary = relationship("Diary", backref="likes")
     user = relationship("User", backref="diary_likes")
+
+
+# このFeedbackモデルが正しく存在することを確認
+class Feedback(Base):
+    __tablename__ = "feedbacks"
+    id = Column(Integer, primary_key=True, index=True)
+    diary_id = Column(Integer, ForeignKey("diaries.id"), unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+
