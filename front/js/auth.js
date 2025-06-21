@@ -2,6 +2,7 @@
 const API_BASE_URL = 'http://localhost:8000';
 let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+let currentUserId = currentUser?.id || null;
 
 // 認証状態をチェックして画面表示を切り替える
 function checkAuth() {
@@ -10,6 +11,7 @@ function checkAuth() {
         document.getElementById('main-screen').classList.remove('hidden');
         document.getElementById('user-name').textContent = currentUser?.username || '';
         document.getElementById('streak-number').textContent = currentUser?.streak_count || '0';
+        currentUserId = currentUser?.id || null;
         loadInitialData();
         if (typeof loadFriends === 'function') loadFriends();
         if (typeof loadFriendRequests === 'function') loadFriendRequests();
@@ -125,6 +127,7 @@ async function fetchUserInfo() {
         
         const userData = await response.json();
         currentUser = userData;
+        currentUserId = userData.id;
         localStorage.setItem('currentUser', JSON.stringify(userData));
         
         // ユーザー名とストリーク数を表示
@@ -140,6 +143,7 @@ async function fetchUserInfo() {
 function logout() {
     authToken = null;
     currentUser = null;
+    currentUserId = null;
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     const friendsList = document.getElementById('friends-list');
@@ -191,12 +195,68 @@ function setupAuthListeners() {
 
 // 初期データの読み込み
 async function loadInitialData() {
-    // ホーム画面のフィードを読み込む
-    await loadDiaryFeed();
-    
-    // 通知数を取得
-    await checkNotifications();
-    
-    // フレンドリクエスト数を取得
-    await checkFriendRequests();
+    try {
+        console.log('初期データ読み込み開始');
+        
+        // ホーム画面のフィードを読み込む
+        await loadDiaryFeed();
+        
+        // 通知数を取得
+        await checkNotifications();
+        
+        // フレンドリクエスト数を取得
+        await checkFriendRequests();
+        
+        console.log('初期データ読み込み完了');
+    } catch (error) {
+        console.error('初期データ読み込みエラー:', error);
+    }
+}
+
+// 通知数をチェック
+async function checkNotifications() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/notifications/count`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const badge = document.getElementById('notification-badge');
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('通知数取得エラー:', error);
+    }
+}
+
+// フレンドリクエスト数をチェック
+async function checkFriendRequests() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/friends/requests`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const requests = await response.json();
+            const badge = document.getElementById('request-badge');
+            if (requests.length > 0) {
+                badge.textContent = requests.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('フレンドリクエスト数取得エラー:', error);
+    }
 }

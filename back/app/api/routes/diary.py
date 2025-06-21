@@ -7,9 +7,9 @@ from ...models.user import User
 from ...schemas.diary import DiaryCreate, DiaryResponse, DiaryDetail, DiaryRules, DiaryLikeResponse
 from ...crud.diary import (
     get_diary, get_diary_by_user, get_user_diaries, get_public_diaries,
-    get_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
+    get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
 )
-from ...crud.friend import get_friend_ids, create_notification
+from ...crud.friend import get_friend_ids, create_notification, are_friends
 from ...utils.diary_rules import generate_random_rules
 from app.services.gemini_service import generate_feedback_from_diary
 from app.crud import diary as crud_diary
@@ -65,8 +65,50 @@ def read_friend_diaries(
     current_user: User = Depends(get_current_user)
 ):
     """フレンドの公開中の日記一覧を取得する（閲覧可能時間内のもの）"""
+    print(f"=== フレンド日記取得開始 ===")
+    print(f"ユーザーID: {current_user.id}, ユーザー名: {current_user.username}")
+    
     friend_ids = get_friend_ids(db, current_user.id)
+    print(f"フレンドID一覧: {friend_ids}")
+    
     diaries = get_friend_diaries(db, current_user.id, friend_ids, skip=skip, limit=limit)
+    print(f"取得した日記数: {len(diaries)}")
+    
+    # 各日記の詳細情報をログ出力
+    for diary in diaries:
+        print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username if diary.user else 'Unknown'}, タイトル: {diary.title}, is_viewable: {diary.is_viewable}")
+    
+    print(f"=== フレンド日記取得完了 ===")
+    return diaries
+
+@router.get("/friend/{friend_id}", response_model=List[DiaryResponse])
+def read_specific_friend_diaries(
+    friend_id: int,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """特定のフレンドの公開中の日記一覧を取得する（閲覧可能時間内のもの）"""
+    print(f"=== 特定フレンド日記取得開始 ===")
+    print(f"ユーザーID: {current_user.id}, ユーザー名: {current_user.username}")
+    print(f"対象フレンドID: {friend_id}")
+    
+    # フレンド関係をチェック
+    are_friends_result = are_friends(db, current_user.id, friend_id)
+    print(f"フレンド関係チェック結果: {are_friends_result}")
+    
+    if not are_friends_result:
+        raise HTTPException(status_code=403, detail="このユーザーの日記を閲覧する権限がありません")
+    
+    diaries = get_specific_friend_diaries(db, friend_id, skip=skip, limit=limit)
+    print(f"取得した日記数: {len(diaries)}")
+    
+    # 各日記の詳細情報をログ出力
+    for diary in diaries:
+        print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username if diary.user else 'Unknown'}, タイトル: {diary.title}, is_viewable: {diary.is_viewable}")
+    
+    print(f"=== 特定フレンド日記取得完了 ===")
     return diaries
 
 @router.get("/{diary_id}", response_model=DiaryDetail)

@@ -2,6 +2,13 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 
+class UserInfo(BaseModel):
+    id: int
+    username: str
+    
+    class Config:
+        from_attributes = True
+
 class DiaryBase(BaseModel):
     title: Optional[str] = None
     content: str
@@ -14,6 +21,7 @@ class DiaryCreate(DiaryBase):
 class DiaryResponse(DiaryBase):
     id: int
     user_id: int
+    user: Optional[UserInfo] = None
     view_count: int
     like_count: int
     time_limit_sec: int

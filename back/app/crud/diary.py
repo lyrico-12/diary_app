@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, func
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -31,14 +31,74 @@ def get_public_diaries(db: Session, skip: int = 0, limit: int = 20):
 
 def get_friend_diaries(db: Session, user_id: int, friend_ids: List[int], skip: int = 0, limit: int = 20):
     """フレンドの公開中の日記一覧を取得する"""
+    print(f"get_friend_diaries - ユーザーID: {user_id}, フレンドID: {friend_ids}")
+    
+    if not friend_ids:
+        print("フレンドIDが空のため、空のリストを返します")
+        return []
+    
     now = datetime.now()
-    # SQLiteでの日時計算の対応
-    # 直接timedelta（秒数）を使って比較
-    return db.query(Diary).filter(
-        Diary.user_id.in_(friend_ids),
-        # SQLiteでは単純な日時計算を使用
-        Diary.is_viewable == True
-    ).order_by(Diary.created_at.desc()).offset(skip).limit(limit).all()
+    print(f"現在時刻: {now}")
+    
+    # 全フレンドの日記を取得（is_viewableフィルタなし）、ユーザー情報も一緒に取得
+    all_friend_diaries = db.query(Diary).options(joinedload(Diary.user)).filter(
+        Diary.user_id.in_(friend_ids)
+    ).order_by(Diary.created_at.desc()).all()
+    
+    print(f"フレンドの全日記数: {len(all_friend_diaries)}")
+    
+    # is_viewableでフィルタリング
+    viewable_diaries = []
+    for diary in all_friend_diaries:
+        is_viewable = diary.is_viewable
+        print(f"日記ID: {diary.id}, ユーザーID: {diary.user_id}, is_viewable: {is_viewable}, created_at: {diary.created_at}, view_limit_duration: {diary.view_limit_duration_sec}")
+        if is_viewable:
+            # ユーザー情報が読み込まれているか確認
+            if diary.user:
+                print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username}, タイトル: {diary.title}, is_viewable: {is_viewable}")
+            else:
+                print(f"警告: 日記ID {diary.id} のユーザー情報が取得できませんでした")
+            viewable_diaries.append(diary)
+    
+    print(f"閲覧可能な日記数: {len(viewable_diaries)}")
+    
+    # ページネーション
+    result = viewable_diaries[skip:skip + limit]
+    print(f"ページネーション後: {len(result)}件")
+    
+    return result
+
+def get_specific_friend_diaries(db: Session, friend_id: int, skip: int = 0, limit: int = 20):
+    """特定のフレンドの公開中の日記一覧を取得する"""
+    print(f"get_specific_friend_diaries - フレンドID: {friend_id}")
+    
+    # 全日記を取得（is_viewableフィルタなし）、ユーザー情報も一緒に取得
+    all_diaries = db.query(Diary).options(joinedload(Diary.user)).filter(
+        Diary.user_id == friend_id
+    ).order_by(Diary.created_at.desc()).all()
+    
+    print(f"フレンドの全日記数: {len(all_diaries)}")
+    
+    # is_viewableでフィルタリング
+    viewable_diaries = []
+    for diary in all_diaries:
+        is_viewable = diary.is_viewable
+        print(f"日記ID: {diary.id}, is_viewable: {is_viewable}, created_at: {diary.created_at}, view_limit_duration: {diary.view_limit_duration_sec}")
+        if is_viewable:
+            # ユーザー情報が読み込まれているか確認
+            if diary.user:
+                print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username}, タイトル: {diary.title}, is_viewable: {is_viewable}")
+            else:
+                print(f"警告: 日記ID {diary.id} のユーザー情報が取得できませんでした")
+            viewable_diaries.append(diary)
+    
+    print(f"閲覧可能な日記数: {len(viewable_diaries)}")
+    
+    # ページネーション
+    result = viewable_diaries[skip:skip + limit]
+    print(f"ページネーション後: {len(result)}件")
+    
+    return result
 
 def create_diary(db: Session, diary: DiaryCreate, user_id: int):
     """新しい日記を作成する"""

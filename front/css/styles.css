@@ -298,9 +298,27 @@ body {
     margin-bottom: 5px;
 }
 
+.diary-friend-name {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    background-color: rgba(106, 90, 205, 0.1);
+    border-radius: 4px;
+    display: inline-block;
+}
+
 .diary-author {
     color: var(--text-light);
     font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.diary-author.friend {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1em;
 }
 
 .diary-date {
