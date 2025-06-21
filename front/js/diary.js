@@ -2,6 +2,7 @@
 let diaryRules = null;
 let timerInterval = null;
 let remainingTime = 0;
+let currentCalendarDate = new Date();
 
 // 日記フィードの読み込み
 async function loadDiaryFeed() {
@@ -152,6 +153,71 @@ function createDiaryListItem(diary) {
     return listItem;
 }
 
+// カレンダーの更新Add commentMore actions
+function updateCalendar(diaries) {
+    const calendarGrid = document.getElementById('calendar-grid');
+    const currentMonth = currentCalendarDate.getMonth();
+    const currentYear = currentCalendarDate.getFullYear();
+    const now = new Date();
+    
+    // カレンダーのタイトル更新
+    document.getElementById('calendar-title').textContent = `${currentYear}年${currentMonth + 1}月`;
+    
+    // カレンダーグリッドをクリア
+    calendarGrid.innerHTML = '';
+    
+    // 曜日ヘッダーを追加
+    const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
+    daysOfWeek.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-day-header';
+        dayHeader.textContent = day;
+        calendarGrid.appendChild(dayHeader);
+    });
+    
+    // 月の最初の日の曜日を取得
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    
+    // 月の日数を取得
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    // 日記の日付を整理
+    const diaryDates = {};
+    diaries.forEach(diary => {
+        const diaryDate = new Date(diary.created_at);
+        if (diaryDate.getMonth() === currentMonth && diaryDate.getFullYear() === currentYear) {
+            const day = diaryDate.getDate();
+            diaryDates[day] = true;
+        }
+    });
+    
+    // 前月の空白セルを追加
+    for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        calendarGrid.appendChild(emptyCell);
+    }
+    
+    // 日付セルを追加
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'calendar-day';
+        dayCell.textContent = day;
+        
+        // 日記がある日はクラスを追加
+        if (diaryDates[day]) {
+            dayCell.classList.add('has-diary');
+        }
+        
+        // 今日の日付にはクラスを追加
+        if (day === now.getDate() && currentMonth === now.getMonth() && currentYear === now.getFullYear()) {
+            dayCell.classList.add('today');
+        }
+        
+        calendarGrid.appendChild(dayCell);
+    }
+}
+
 // 日記詳細の表示
 async function viewDiaryDetail(diaryId) {
     try {
@@ -179,6 +245,10 @@ async function viewDiaryDetail(diaryId) {
         document.getElementById('view-count').textContent = diary.view_count;
         document.getElementById('like-count').textContent = diary.like_count;
         document.getElementById('like-btn').setAttribute('data-id', diary.id);
+
+        // ルールを表示
+        document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
+        document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
 
         // フィードバックセクションの初期化
         initFeedbackSection(diaryId, diary.user_id);
@@ -559,11 +629,13 @@ function setupDiaryListeners() {
     
     // 前の月ボタン
     document.getElementById('prev-month').addEventListener('click', () => {
-        // カレンダー月切り替え処理（実装省略）
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        loadMyDiaries();
     });
     
     // 次の月ボタン
     document.getElementById('next-month').addEventListener('click', () => {
-        // カレンダー月切り替え処理（実装省略）
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        loadMyDiaries();
     });
 }
