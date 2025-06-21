@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, func
 from datetime import datetime, timedelta
 from typing import List, Optional
-from ..models.diary import Diary, DiaryLike
+from ..models.diary import Diary, DiaryLike, Feedback
 from ..models.user import User
 from ..schemas.diary import DiaryCreate
 from .user import update_streak
@@ -177,5 +177,22 @@ def unlike_diary(db: Session, diary_id: int, user_id: int):
     if diary.like_count > 0:
         diary.like_count -= 1
     
+    db.commit()
+    return True
+
+def delete_diary(db: Session, diary_id: int, user_id: int):
+    """日記を削除する（自分の日記のみ）"""
+    diary = get_diary_by_user(db, user_id, diary_id)
+    if not diary:
+        return False
+    
+    # 関連するフィードバックも削除
+    db.query(Feedback).filter(Feedback.diary_id == diary_id).delete()
+    
+    # 関連するいいねも削除
+    db.query(DiaryLike).filter(DiaryLike.diary_id == diary_id).delete()
+    
+    # 日記を削除
+    db.delete(diary)
     db.commit()
     return True
