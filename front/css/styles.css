@@ -621,7 +621,8 @@ body {
     margin-bottom: 15px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    font-family: 'Klee One', sans-serif;
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     font-size: 1.2em;
 }
 
@@ -635,7 +636,8 @@ body {
     padding: 15px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    font-family: 'Klee One', sans-serif;
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     font-size: 1em;
     resize: none;
     background-image: linear-gradient(#e0e0e0 1px, transparent 1px);
@@ -695,11 +697,15 @@ body {
 }
 
 #detail-title {
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     margin-bottom: 15px;
     color: var(--primary-color);
 }
 
 #detail-content {
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     white-space: pre-wrap;
     line-height: 1.8;
 }
@@ -736,41 +742,43 @@ body {
     .diary-feed {
         grid-template-columns: 1fr;
     }
-    
+
     .friends-list {
         grid-template-columns: 1fr;
     }
-    
+
     .navbar {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .nav-links {
         width: 100%;
         justify-content: space-around;
     }
-    
+
     .nav-link {
         margin: 0 5px;
         padding: 5px;
     }
-    
+
     .nav-user {
         width: 100%;
         justify-content: space-between;
     }
-    
-    .diary-container, .diary-detail-container {
+
+    .diary-container,
+    .diary-detail-container {
         margin: 10px;
     }
-    
+
     .diary-detail-footer {
         flex-direction: column;
         gap: 15px;
     }
-    
-    .diary-stats, .diary-rules-small {
+
+    .diary-stats,
+    .diary-rules-small {
         text-align: center;
     }
 }

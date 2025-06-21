@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from ..core.database import Base
 from datetime import datetime, timedelta, timezone
 
+
 class Diary(Base):
     __tablename__ = "diaries"
 
