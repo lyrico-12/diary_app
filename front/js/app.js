@@ -53,6 +53,12 @@ function setupNavListeners() {
         switchContent('notifications');
         loadNotifications();
     });
+    
+    // カレンダーアイコンボタン
+    document.getElementById('calendar-btn').addEventListener('click', () => {
+        switchContent('my-diaries');
+        loadMyDiaries();
+    });
 }
 
 // コンテンツエリアの切り替え
