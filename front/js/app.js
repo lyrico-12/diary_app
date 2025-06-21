@@ -2,18 +2,29 @@
 
 // ページロード時の初期化
 document.addEventListener('DOMContentLoaded', () => {
-    // 認証タブの設定
-    setupAuthTabs();
+    console.log('=== アプリケーション初期化開始 ===');
     
-    // 認証状態をチェック
-    checkAuth();
-    
-    // 各種イベントリスナーの設定
-    setupAuthListeners();
-    setupNavListeners();
-    setupDiaryListeners();
-    setupFriendListeners();
-    setupNotificationListeners();
+    try {
+        // 認証タブの設定
+        console.log('認証タブ設定中...');
+        setupAuthTabs();
+        
+        // 認証状態をチェック
+        console.log('認証状態チェック中...');
+        checkAuth();
+        
+        // 各種イベントリスナーの設定
+        console.log('イベントリスナー設定中...');
+        setupAuthListeners();
+        setupNavListeners();
+        setupDiaryListeners();
+        setupFriendListeners();
+        setupNotificationListeners();
+        
+        console.log('=== アプリケーション初期化完了 ===');
+    } catch (error) {
+        console.error('アプリケーション初期化エラー:', error);
+    }
 });
 
 // ナビゲーションリンクのイベントリスナー

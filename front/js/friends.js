@@ -181,6 +181,8 @@ function showFriendDiariesModal(diaries, friendId, friendName) {
         console.log('日記カード作成開始');
         diaries.forEach((diary, index) => {
             console.log(`日記 ${index + 1}:`, diary);
+            console.log(`日記 ${index + 1} のユーザー情報:`, diary.user);
+            console.log(`日記 ${index + 1} のユーザー名:`, diary.user?.username);
             const diaryCard = createDiaryCard(diary);
             diariesList.appendChild(diaryCard);
         });
@@ -224,7 +226,15 @@ function createDiaryCard(diary) {
     const createdAt = new Date(diary.created_at);
     const formattedDate = `${createdAt.getFullYear()}/${(createdAt.getMonth() + 1).toString().padStart(2, '0')}/${createdAt.getDate().toString().padStart(2, '0')} ${createdAt.getHours().toString().padStart(2, '0')}:${createdAt.getMinutes().toString().padStart(2, '0')}`;
     
-    const cardHTML = `
+    // フレンドのユーザー名を取得
+    const authorName = diary.user?.username || 'ユーザー';
+    
+    let cardHTML = '';
+    
+    // フレンドのユーザー名をタイトルの上に表示
+    cardHTML += `<div style="color: #6a5acd; font-weight: 600; font-size: 0.9em; margin-bottom: 8px; padding: 4px 8px; background-color: rgba(106, 90, 205, 0.1); border-radius: 4px; display: inline-block;">👤 ${authorName}</div>`;
+    
+    cardHTML += `
         <div style="margin-bottom: 10px;">
             <h3 style="margin: 0 0 5px 0; color: #333;">${diary.title || '無題'}</h3>
             <p style="margin: 0; color: #666; font-size: 0.9em;">${formattedDate}</p>
