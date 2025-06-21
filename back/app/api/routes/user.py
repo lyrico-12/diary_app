@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 
 from ...core.database import get_db
 from ...core.security import get_current_user
 from ...schemas.user import UserResponse, UserUpdate
-from ...crud.user import get_user, update_user, delete_user
+from ...crud.user import get_user, update_user, delete_user, search_users
 from ...models.user import User
 
 router = APIRouter(
@@ -18,6 +18,18 @@ router = APIRouter(
 def read_users_me(current_user: User = Depends(get_current_user)):
     """現在のログインユーザーの情報を取得"""
     return current_user
+
+@router.get("/search", response_model=List[UserResponse])
+def search_users_endpoint(
+    query: str = Query(..., min_length=1, max_length=50, description="検索クエリ"),
+    skip: int = Query(0, ge=0, description="スキップする件数"),
+    limit: int = Query(20, ge=1, le=100, description="取得する件数"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """ユーザー名でユーザーを検索する"""
+    users = search_users(db, query, current_user.id, skip, limit)
+    return users
 
 @router.put("/me", response_model=UserResponse)
 def update_user_me(

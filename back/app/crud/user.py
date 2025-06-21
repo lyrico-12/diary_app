@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from ..models.user import User
 from ..schemas.user import UserCreate
 from ..core.security import get_password_hash, verify_password
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, date
 
 def get_user(db: Session, user_id: int):
@@ -97,3 +97,10 @@ def delete_user(db: Session, user_id: int):
         db.delete(db_user)
         db.commit()
     return db_user
+
+def search_users(db: Session, query: str, current_user_id: int, skip: int = 0, limit: int = 20) -> List[User]:
+    """ユーザー名で部分一致検索を行う（自分自身は除外）"""
+    return db.query(User).filter(
+        User.username.ilike(f"%{query}%"),
+        User.id != current_user_id
+    ).offset(skip).limit(limit).all()
