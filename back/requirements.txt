@@ -11,3 +11,4 @@ python-dotenv>=1.0.0
 psycopg2-binary>=2.9.5  # PostgreSQL用
 pydantic-settings
 pytest==8.3.4
+google-generativeai

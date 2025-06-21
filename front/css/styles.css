@@ -719,6 +719,36 @@ body {
     margin-left: 10px;
 }
 
+/* フィードバックコンテナ */
+.feedback-container {
+    background-color: #f0f8ff; /* 明るい青系の背景色 */
+    border-left: 4px solid #4a90e2; /* 左側のアクセントボーダー */
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.feedback-container h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.feedback-container p {
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+#feedback-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.feedback-loading {
+    font-style: italic;
+    color: #666;
+    margin-top: 10px;
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
     .diary-feed {
