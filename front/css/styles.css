@@ -87,6 +87,15 @@ body {
     color: #e74c3c;
 }
 
+.danger-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.danger-btn:hover {
+    background-color: #c82333;
+}
+
 /* フォームスタイル */
 .form-group {
     margin-bottom: 15px;
@@ -696,6 +705,13 @@ body {
     margin-bottom: 30px;
 }
 
+.diary-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    align-items: center;
+}
+
 #detail-title {
     /* フォントを変更 */
     font-family: 'Zen Kurenaido', sans-serif;
@@ -765,6 +781,22 @@ body {
     font-style: italic;
     color: #666;
     margin-top: 10px;
+}
+
+/* 月ごとのフィードバックセクション */
+.monthly-feedback-section {
+    margin-top: 20px;
+    text-align: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.monthly-feedback-section .feedback-container {
+    margin-top: 15px;
+    background-color: #fff3cd; /* 明るい黄色系の背景色 */
+    border-left: 4px solid #ffc107; /* 黄色のアクセントボーダー */
 }
 
 /* レスポンシブデザイン */

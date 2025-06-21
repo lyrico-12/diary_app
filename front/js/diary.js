@@ -89,6 +89,9 @@ async function loadMyDiaries() {
         // カレンダーも更新
         updateCalendar(diaries);
         
+        // 月ごとのフィードバックセクションを初期化
+        await initMonthlyFeedbackSection();
+        
     } catch (error) {
         console.error('Error loading my diaries:', error);
     }
@@ -277,6 +280,15 @@ async function viewDiaryDetail(diaryId) {
         document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
         document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
 
+        // 自分の日記の場合のみ削除ボタンを表示
+        const deleteBtn = document.getElementById('delete-diary-btn');
+        if (diary.user_id === currentUser.id) {
+            deleteBtn.classList.remove('hidden');
+            deleteBtn.setAttribute('data-id', diary.id);
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+
         // フィードバックセクションの初期化
         initFeedbackSection(diaryId, diary.user_id);
         
@@ -422,6 +434,168 @@ function displayFeedback(content) {
     document.getElementById('get-feedback-btn').classList.add('hidden');
 }
 
+// 月ごとのフィードバック生成をリクエストする
+async function requestMonthlyFeedback(year, month) {
+    const getMonthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
+    const monthlyFeedbackLoading = document.getElementById('monthly-feedback-loading-state');
+
+    getMonthlyFeedbackBtn.classList.add('hidden');
+    monthlyFeedbackLoading.classList.remove('hidden');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('月ごとフィードバックの生成リクエストに失敗しました。');
+        }
+
+        // 生成リクエスト後、ポーリングを開始してフィードバックを取得
+        pollForMonthlyFeedback(year, month);
+
+    } catch (error) {
+        console.error('Error requesting monthly feedback:', error);
+        alert(error.message);
+        // エラー発生時はボタンを再表示
+        getMonthlyFeedbackBtn.classList.remove('hidden');
+        monthlyFeedbackLoading.classList.add('hidden');
+    }
+}
+
+// 月ごとのフィードバックが生成されるまでポーリングする
+function pollForMonthlyFeedback(year, month) {
+    let attempts = 0;
+    const maxAttempts = 10; // 最大10回試行 (合計約30秒)
+    const interval = 3000; // 3秒間隔
+
+    const intervalId = setInterval(async () => {
+        attempts++;
+        try {
+            const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (response.ok) {
+                const feedback = await response.json();
+                if (feedback && feedback.content) {
+                    clearInterval(intervalId);
+                    displayMonthlyFeedback(feedback.content);
+                    document.getElementById('monthly-feedback-loading-state').classList.add('hidden');
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Monthly feedback polling error:', error);
+        }
+
+        if (attempts >= maxAttempts) {
+            clearInterval(intervalId);
+            alert('月ごとフィードバックの取得に時間がかかっています。後ほど再度お試しください。');
+            document.getElementById('get-monthly-feedback-btn').classList.remove('hidden');
+            document.getElementById('monthly-feedback-loading-state').classList.add('hidden');
+        }
+    }, interval);
+}
+
+// 取得した月ごとのフィードバックを画面に表示する
+function displayMonthlyFeedback(content) {
+    const monthlyFeedbackContainer = document.getElementById('monthly-feedback-container');
+    const monthlyFeedbackContent = document.getElementById('monthly-feedback-content');
+    
+    monthlyFeedbackContent.textContent = content;
+    monthlyFeedbackContainer.classList.remove('hidden');
+    document.getElementById('get-monthly-feedback-btn').classList.add('hidden');
+}
+
+// 既存の月ごとフィードバックを取得して表示する
+async function fetchAndDisplayMonthlyFeedback(year, month) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const feedback = await response.json();
+            if (feedback && feedback.content) {
+                displayMonthlyFeedback(feedback.content);
+            }
+        } 
+    } catch (error) {
+        // 既存フィードバックがない場合はボタンが表示されたままになるので、ここではエラーログのみ
+        console.error('Error fetching existing monthly feedback:', error);
+    }
+}
+
+// 月ごとのフィードバックセクションの初期化
+async function initMonthlyFeedbackSection() {
+    const monthlyFeedbackSection = document.getElementById('monthly-feedback-section');
+    const getMonthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
+    const monthlyFeedbackContainer = document.getElementById('monthly-feedback-container');
+    const monthlyFeedbackLoading = document.getElementById('monthly-feedback-loading-state');
+
+    // 初期状態にリセット
+    getMonthlyFeedbackBtn.classList.remove('hidden');
+    monthlyFeedbackContainer.classList.add('hidden');
+    monthlyFeedbackLoading.classList.add('hidden');
+    getMonthlyFeedbackBtn.disabled = false;
+
+    // 現在のカレンダー年月を取得
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth() + 1;
+
+    // ボタンに年月を設定
+    getMonthlyFeedbackBtn.setAttribute('data-year', year);
+    getMonthlyFeedbackBtn.setAttribute('data-month', month);
+
+    // 既存のフィードバックがないか確認
+    await fetchAndDisplayMonthlyFeedback(year, month);
+}
+
+// 日記を削除する
+async function deleteDiary(diaryId) {
+    // 確認ダイアログを表示
+    if (!confirm('この日記を削除しますか？\nこの操作は取り消せません。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/${diaryId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('日記の削除に失敗しました');
+        }
+        
+        // 削除成功のメッセージを表示
+        alert('日記を削除しました');
+        
+        // 詳細画面を閉じて自分の日記一覧に戻る
+        document.getElementById('diary-detail-screen').classList.add('hidden');
+        document.getElementById('main-screen').classList.remove('hidden');
+        
+        // 自分の日記一覧を表示
+        document.getElementById('nav-my-diaries').click();
+        
+        // 日記一覧を再読み込み
+        loadMyDiaries();
+        
+    } catch (error) {
+        console.error('Error deleting diary:', error);
+        alert('日記の削除に失敗しました: ' + error.message);
+    }
+}
 
 // 新しい日記を書く
 async function startNewDiary() {
@@ -649,6 +823,12 @@ function setupDiaryListeners() {
         requestFeedback(diaryId);
     });
     
+    // 削除ボタン
+    document.getElementById('delete-diary-btn').addEventListener('click', () => {
+        const diaryId = document.getElementById('delete-diary-btn').getAttribute('data-id');
+        deleteDiary(diaryId);
+    });
+    
     // 文字数カウンター
     document.getElementById('diary-content').addEventListener('input', (e) => {
         document.getElementById('char-count').textContent = e.target.value.length;
@@ -664,5 +844,12 @@ function setupDiaryListeners() {
     document.getElementById('next-month').addEventListener('click', () => {
         currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
         loadMyDiaries();
+    });
+    
+    // 月ごとフィードバック取得ボタン
+    document.getElementById('get-monthly-feedback-btn').addEventListener('click', () => {
+        const year = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-year'));
+        const month = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-month'));
+        requestMonthlyFeedback(year, month);
     });
 }

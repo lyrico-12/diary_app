@@ -7,11 +7,11 @@ from ...models.user import User
 from ...schemas.diary import DiaryCreate, DiaryResponse, DiaryDetail, DiaryRules, DiaryLikeResponse
 from ...crud.diary import (
     get_diary, get_diary_by_user, get_user_diaries, get_public_diaries,
-    get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
+    get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary, delete_diary
 )
 from ...crud.friend import get_friend_ids, create_notification, are_friends
 from ...utils.diary_rules import generate_random_rules
-from app.services.gemini_service import generate_feedback_from_diary
+from app.services.gemini_service import generate_feedback_from_diary, generate_monthly_feedback_from_diaries
 from app.crud import diary as crud_diary
 from app.models.diary import Feedback
 
@@ -192,6 +192,17 @@ def unlike_diary_endpoint(
     if not result:
         raise HTTPException(status_code=404, detail="いいねが見つかりません")
 
+@router.delete("/{diary_id}", status_code=204)
+def delete_diary_endpoint(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """日記を削除する（自分の日記のみ）"""
+    result = delete_diary(db, diary_id, current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="日記が見つからないか、削除権限がありません")
+
 @router.post("/{diary_id}/feedback", summary="日記のフィードバックを生成")
 async def create_diary_feedback(
     diary_id: int,
@@ -238,4 +249,76 @@ def get_diary_feedback(
     ).first()
     if not feedback:
         raise HTTPException(status_code=404, detail="フィードバックが見つかりません")
+    return feedback
+
+@router.post("/monthly-feedback/{year}/{month}", summary="月ごとのフィードバックを生成")
+async def create_monthly_feedback(
+    year: int,
+    month: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    指定された年月の日記を全て取得し、月ごとのフィードバックを生成する。
+    API呼び出しに時間がかかる可能性があるため、バックグラウンドタスクとして実行する。
+    """
+    # 指定された年月の日記を取得
+    from datetime import datetime
+    start_date = datetime(year, month, 1)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1)
+    else:
+        end_date = datetime(year, month + 1, 1)
+    
+    # ユーザーの日記を取得
+    user_diaries = crud_diary.get_user_diaries_by_period(db, current_user.id, start_date, end_date)
+    
+    if not user_diaries:
+        raise HTTPException(status_code=404, detail="指定された月に日記が見つかりません")
+    
+    # 既存の月ごとフィードバックがあればそれを返す
+    existing_feedback = db.query(Feedback).filter(
+        Feedback.user_id == current_user.id,
+        Feedback.period == f"{year}-{month:02d}",
+        Feedback.diary_id.is_(None)  # 月ごとフィードバックはdiary_idがnull
+    ).first()
+    
+    if existing_feedback:
+        return {"message": "月ごとフィードバックは既に存在します。"}
+
+    def task():
+        # 全ての日記の内容を結合
+        all_content = "\n\n".join([diary.content for diary in user_diaries])
+        feedback_content = generate_monthly_feedback_from_diaries(all_content, year, month)
+        
+        db_feedback = Feedback(
+            diary_id=None,  # 月ごとフィードバックはdiary_idがnull
+            user_id=current_user.id,
+            period=f"{year}-{month:02d}",
+            content=feedback_content
+        )
+        db.add(db_feedback)
+        db.commit()
+
+    background_tasks.add_task(task)
+    
+    return {"message": "月ごとフィードバックの生成を開始しました。少し時間をおいてから再度確認してください。"}
+
+@router.get("/monthly-feedback/{year}/{month}", summary="月ごとのフィードバックを取得")
+def get_monthly_feedback(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """指定された年月の月ごとフィードバックを取得する"""
+    feedback = db.query(Feedback).filter(
+        Feedback.user_id == current_user.id,
+        Feedback.period == f"{year}-{month:02d}",
+        Feedback.diary_id.is_(None)  # 月ごとフィードバックはdiary_idがnull
+    ).first()
+    
+    if not feedback:
+        raise HTTPException(status_code=404, detail="月ごとフィードバックが見つかりません")
     return feedback
