@@ -7,7 +7,7 @@ from ...models.user import User
 from ...schemas.diary import DiaryCreate, DiaryResponse, DiaryDetail, DiaryRules, DiaryLikeResponse
 from ...crud.diary import (
     get_diary, get_diary_by_user, get_user_diaries, get_public_diaries,
-    get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary
+    get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary, delete_diary
 )
 from ...crud.friend import get_friend_ids, create_notification, are_friends
 from ...utils.diary_rules import generate_random_rules
@@ -191,6 +191,17 @@ def unlike_diary_endpoint(
     result = unlike_diary(db, diary_id, current_user.id)
     if not result:
         raise HTTPException(status_code=404, detail="いいねが見つかりません")
+
+@router.delete("/{diary_id}", status_code=204)
+def delete_diary_endpoint(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """日記を削除する（自分の日記のみ）"""
+    result = delete_diary(db, diary_id, current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="日記が見つからないか、削除権限がありません")
 
 @router.post("/{diary_id}/feedback", summary="日記のフィードバックを生成")
 async def create_diary_feedback(

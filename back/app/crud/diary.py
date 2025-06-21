@@ -179,3 +179,17 @@ def unlike_diary(db: Session, diary_id: int, user_id: int):
     
     db.commit()
     return True
+
+def delete_diary(db: Session, diary_id: int, user_id: int):
+    """日記を削除する（自分の日記のみ）"""
+    diary = get_diary_by_user(db, user_id, diary_id)
+    if not diary:
+        return False
+    
+    # 関連するいいねも削除
+    db.query(DiaryLike).filter(DiaryLike.diary_id == diary_id).delete()
+    
+    # 日記を削除
+    db.delete(diary)
+    db.commit()
+    return True

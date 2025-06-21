@@ -277,6 +277,15 @@ async function viewDiaryDetail(diaryId) {
         document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
         document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
 
+        // 自分の日記の場合のみ削除ボタンを表示
+        const deleteBtn = document.getElementById('delete-diary-btn');
+        if (diary.user_id === currentUser.id) {
+            deleteBtn.classList.remove('hidden');
+            deleteBtn.setAttribute('data-id', diary.id);
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+
         // フィードバックセクションの初期化
         initFeedbackSection(diaryId, diary.user_id);
         
@@ -422,6 +431,43 @@ function displayFeedback(content) {
     document.getElementById('get-feedback-btn').classList.add('hidden');
 }
 
+// 日記を削除する
+async function deleteDiary(diaryId) {
+    // 確認ダイアログを表示
+    if (!confirm('この日記を削除しますか？\nこの操作は取り消せません。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/${diaryId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('日記の削除に失敗しました');
+        }
+        
+        // 削除成功のメッセージを表示
+        alert('日記を削除しました');
+        
+        // 詳細画面を閉じて自分の日記一覧に戻る
+        document.getElementById('diary-detail-screen').classList.add('hidden');
+        document.getElementById('main-screen').classList.remove('hidden');
+        
+        // 自分の日記一覧を表示
+        document.getElementById('nav-my-diaries').click();
+        
+        // 日記一覧を再読み込み
+        loadMyDiaries();
+        
+    } catch (error) {
+        console.error('Error deleting diary:', error);
+        alert('日記の削除に失敗しました: ' + error.message);
+    }
+}
 
 // 新しい日記を書く
 async function startNewDiary() {
@@ -647,6 +693,12 @@ function setupDiaryListeners() {
     document.getElementById('get-feedback-btn').addEventListener('click', () => {
         const diaryId = document.getElementById('get-feedback-btn').getAttribute('data-id');
         requestFeedback(diaryId);
+    });
+    
+    // 削除ボタン
+    document.getElementById('delete-diary-btn').addEventListener('click', () => {
+        const diaryId = document.getElementById('delete-diary-btn').getAttribute('data-id');
+        deleteDiary(diaryId);
     });
     
     // 文字数カウンター
