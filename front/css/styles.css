@@ -268,34 +268,61 @@ body {
 
 /* 日記フィード */
 .diary-feed {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .diary-card {
     background-color: var(--card-bg);
-    border-radius: 10px;
+    border-radius: 15px;
     padding: 20px;
     box-shadow: var(--shadow);
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--border-color);
 }
 
 .diary-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .diary-header {
-    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.diary-author {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 1em;
+    margin: 0;
+}
+
+.diary-author.friend {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1em;
+}
+
+.diary-date {
+    color: var(--text-light);
+    font-size: 0.9em;
+    margin: 0;
 }
 
 .diary-title {
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+    color: var(--text-color);
 }
 
 .diary-friend-name {
@@ -309,48 +336,34 @@ body {
     display: inline-block;
 }
 
-.diary-author {
-    color: var(--text-light);
-    font-size: 0.9em;
-    margin-bottom: 5px;
-}
-
-.diary-author.friend {
-    color: var(--primary-color);
-    font-weight: 600;
-    font-size: 1em;
-}
-
-.diary-date {
-    color: var(--text-light);
-    font-size: 0.8em;
-}
-
 .diary-preview {
     margin: 10px 0;
+    line-height: 1.6;
+    color: var(--text-color);
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
     overflow: hidden;
 }
 
 .diary-footer {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    font-size: 0.8em;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9em;
     color: var(--text-light);
 }
 
 .time-left {
     background-color: var(--warning-color);
     color: white;
-    padding: 3px 8px;
-    border-radius: 3px;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    padding: 4px 10px;
+    border-radius: 15px;
     font-size: 0.8em;
+    font-weight: 600;
 }
 
 /* 日記カレンダー */
@@ -734,7 +747,35 @@ body {
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
     .diary-feed {
-        grid-template-columns: 1fr;
+        max-width: 100%;
+        margin: 0 10px;
+        gap: 12px;
+    }
+    
+    .diary-card {
+        padding: 15px;
+        border-radius: 12px;
+    }
+    
+    .diary-header {
+        margin-bottom: 12px;
+        gap: 8px;
+    }
+    
+    .diary-title {
+        font-size: 1em;
+        margin-bottom: 8px;
+    }
+    
+    .diary-preview {
+        -webkit-line-clamp: 3;
+        margin: 8px 0;
+    }
+    
+    .diary-footer {
+        margin-top: 12px;
+        padding-top: 12px;
+        font-size: 0.8em;
     }
     
     .friends-list {
