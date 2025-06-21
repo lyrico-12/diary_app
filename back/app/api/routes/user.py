@@ -4,8 +4,8 @@ from typing import List
 
 from ...core.database import get_db
 from ...core.security import get_current_user
-from ...schemas.user import UserResponse, UserUpdate
-from ...crud.user import get_user, update_user, delete_user, search_users
+from ...schemas.user import UserResponse, UserUpdate, ProfileImageUpdate
+from ...crud.user import get_user, update_user, delete_user, search_users, update_user_profile_image
 from ...models.user import User
 
 router = APIRouter(
@@ -39,6 +39,16 @@ def update_user_me(
 ):
     """ユーザー情報の更新"""
     updated_user = update_user(db, db_user=current_user, user_update=user_update)
+    return updated_user
+
+@router.put("/me/profile-image", response_model=UserResponse)
+def update_profile_image(
+    profile_image_update: ProfileImageUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """プロフィール画像の更新"""
+    updated_user = update_user_profile_image(db, current_user, profile_image_update.profile_image_url)
     return updated_user
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

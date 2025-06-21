@@ -12,6 +12,12 @@ function checkAuth() {
         document.getElementById('user-name').textContent = currentUser?.username || '';
         document.getElementById('streak-number').textContent = currentUser?.streak_count || '0';
         currentUserId = currentUser?.id || null;
+        
+        // プロフィール画像を更新
+        if (typeof updateNavProfileImage === 'function') {
+            updateNavProfileImage();
+        }
+        
         loadInitialData();
         if (typeof loadFriends === 'function') loadFriends();
         if (typeof loadFriendRequests === 'function') loadFriendRequests();
@@ -133,6 +139,11 @@ async function fetchUserInfo() {
         // ユーザー名とストリーク数を表示
         document.getElementById('user-name').textContent = userData.username;
         document.getElementById('streak-number').textContent = userData.streak_count;
+        
+        // プロフィール画像を更新
+        if (typeof updateNavProfileImage === 'function') {
+            updateNavProfileImage();
+        }
         
     } catch (error) {
         console.error('Error fetching user info:', error);

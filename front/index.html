@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 </head>
 
 <body>
@@ -67,8 +68,10 @@
                     <button id="nav-friends" class="nav-link"><i class="fas fa-user-friends"></i> フレンド</button>
                     <button id="nav-notifications" class="nav-link"><i class="fas fa-bell"></i> <span
                             id="notification-badge" class="badge hidden">0</span></button>
+                    <button id="nav-profile" class="nav-link"><i class="fas fa-user-cog"></i> プロフィール</button>
                 </div>
                 <div class="nav-user">
+                    <div id="nav-user-profile"></div>
                     <span id="user-name"></span>
                     <span id="streak-count"><i class="fas fa-fire"></i> <span id="streak-number">0</span></span>
                     <button id="logout-btn" class="btn small-btn">ログアウト</button>
@@ -157,6 +160,29 @@
                         <p class="empty-state">通知はありません。</p>
                     </div>
                 </div>
+
+                <!-- プロフィール設定画面 -->
+                <div id="profile-content" class="content hidden">
+                    <div class="content-header">
+                        <h2>プロフィール設定</h2>
+                    </div>
+
+                    <div class="profile-settings">
+                        <h3>プロフィール画像</h3>
+                        <div class="profile-image-section">
+                            <div id="current-profile-image"></div>
+                            <div>
+                                <input type="file" id="profile-image-input" class="profile-image-input" accept="image/*">
+                                <button id="profile-image-upload-btn" class="profile-image-upload-btn">
+                                    画像を選択
+                                </button>
+                                <p style="margin-top: 5px; font-size: 0.8em; color: var(--text-light);">
+                                    JPG, PNG, GIF形式に対応
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -238,12 +264,37 @@
         </div>
     </div>
 
+    <!-- 画像クロップモーダル -->
+    <div id="crop-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>プロフィール画像を設定</h3>
+                <button id="crop-modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="crop-container">
+                    <img id="crop-image" style="max-width: 100%;">
+                </div>
+                <div class="crop-preview">
+                    <h4>プレビュー</h4>
+                    <div id="crop-preview-container"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="crop-cancel-btn" class="btn secondary-btn">キャンセル</button>
+                <button id="crop-apply-btn" class="btn primary-btn">適用</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/diary.js"></script>
     <script src="js/friends.js"></script>
     <script src="js/notifications.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/app.js"></script>
 </body>
 

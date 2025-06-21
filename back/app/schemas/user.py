@@ -16,6 +16,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     streak_count: int
+    profile_image_url: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -23,6 +24,7 @@ class UserResponse(UserBase):
 
 class UserDetail(UserResponse):
     last_streak_date: Optional[datetime] = None
+    profile_image_url: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -38,6 +40,12 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class ProfileImageUpdate(BaseModel):
+    profile_image_url: str = Field(..., description="Base64エンコードされた画像データまたは画像URL")
     
     class Config:
         from_attributes = True

@@ -90,6 +90,13 @@ def update_user(db: Session, db_user: User, user_update):
     db.refresh(db_user)
     return db_user
 
+def update_user_profile_image(db: Session, db_user: User, profile_image_url: str):
+    """ユーザーのプロフィール画像を更新する"""
+    db_user.profile_image_url = profile_image_url
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 def delete_user(db: Session, user_id: int):
     """ユーザーを削除する"""
     db_user = get_user(db, user_id)

@@ -133,6 +133,127 @@ body {
     margin-left: 3px;
 }
 
+/* プロフィール画像 */
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image.small {
+    width: 24px;
+    height: 24px;
+}
+
+.profile-image.large {
+    width: 80px;
+    height: 80px;
+}
+
+.profile-image-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image-placeholder.small {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8em;
+}
+
+.profile-image-placeholder.large {
+    width: 80px;
+    height: 80px;
+    font-size: 1.5em;
+}
+
+/* プロフィール画像 */
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image.small {
+    width: 24px;
+    height: 24px;
+}
+
+.profile-image.large {
+    width: 80px;
+    height: 80px;
+}
+
+.profile-image-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image-placeholder.small {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8em;
+}
+
+.profile-image-placeholder.large {
+    width: 80px;
+    height: 80px;
+    font-size: 1.5em;
+}
+
+.profile-settings {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.profile-image-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.profile-image-input {
+    display: none;
+}
+
+.profile-image-upload-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.profile-image-upload-btn:hover {
+    background-color: var(--primary-dark);
+}
+
 /* 認証画面 */
 .auth-container {
     max-width: 400px;
@@ -183,6 +304,50 @@ body {
 
 .auth-form.active {
     display: block;
+}
+
+/* プロフィール画像 */
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image.small {
+    width: 24px;
+    height: 24px;
+}
+
+.profile-image.large {
+    width: 80px;
+    height: 80px;
+}
+
+.profile-image-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image-placeholder.small {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8em;
+}
+
+.profile-image-placeholder.large {
+    width: 80px;
+    height: 80px;
+    font-size: 1.5em;
 }
 
 /* ナビゲーションバー */
@@ -767,6 +932,104 @@ body {
     margin-top: 10px;
 }
 
+/* プロフィール画像とモーダル */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 0;
+    max-width: 600px;
+    max-height: 80vh;
+    width: 90%;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: var(--text-color);
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* クロップ関連 */
+#crop-container {
+    max-height: 400px;
+    margin-bottom: 20px;
+}
+
+.crop-preview {
+    text-align: center;
+}
+
+.crop-preview h4 {
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+#crop-preview-container {
+    display: inline-block;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--border-color);
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
     .diary-feed {
@@ -811,4 +1074,81 @@ body {
     .diary-rules-small {
         text-align: center;
     }
+}
+
+/* プロフィール画像 */
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image.small {
+    width: 24px;
+    height: 24px;
+}
+
+.profile-image.large {
+    width: 80px;
+    height: 80px;
+}
+
+.profile-image-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+}
+
+.profile-image-placeholder.small {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8em;
+}
+
+.profile-image-placeholder.large {
+    width: 80px;
+    height: 80px;
+    font-size: 1.5em;
+}
+
+.profile-settings {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.profile-image-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.profile-image-input {
+    display: none;
+}
+
+.profile-image-upload-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.profile-image-upload-btn:hover {
+    background-color: var(--primary-dark);
 }

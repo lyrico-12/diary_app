@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupDiaryListeners();
         setupFriendListeners();
         setupNotificationListeners();
+        setupProfileListeners();
         
         console.log('=== アプリケーション初期化完了 ===');
     } catch (error) {
@@ -52,6 +53,12 @@ function setupNavListeners() {
     document.getElementById('nav-notifications').addEventListener('click', () => {
         switchContent('notifications');
         loadNotifications();
+    });
+    
+    // プロフィールリンク
+    document.getElementById('nav-profile').addEventListener('click', () => {
+        switchContent('profile');
+        initializeProfileScreen();
     });
 }
 
