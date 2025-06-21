@@ -67,8 +67,9 @@ class DiaryLike(Base):
 class Feedback(Base):
     __tablename__ = "feedbacks"
     id = Column(Integer, primary_key=True, index=True)
-    diary_id = Column(Integer, ForeignKey("diaries.id"), unique=True)
+    diary_id = Column(Integer, ForeignKey("diaries.id"), nullable=True)  # 月ごとフィードバックではnull
     user_id = Column(Integer, ForeignKey("users.id"))
+    period = Column(String, nullable=True)  # 月ごとフィードバック用 (例: "2024-06")
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=func.now())
 
