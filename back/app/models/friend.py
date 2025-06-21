@@ -32,14 +32,4 @@ class Notification(Base):
     user = relationship("User", backref="notifications")
 
 
-class Feedback(Base):
-    __tablename__ = "feedbacks"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    period = Column(String)  # 'weekly' or 'monthly'
-    content = Column(Text)
-    created_at = Column(DateTime, default=func.now())
-    
-    # リレーションシップ
-    user = relationship("User", backref="feedbacks")
+

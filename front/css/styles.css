@@ -651,7 +651,8 @@ body {
     margin-bottom: 15px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    font-family: 'Klee One', sans-serif;
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     font-size: 1.2em;
 }
 
@@ -665,7 +666,8 @@ body {
     padding: 15px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    font-family: 'Klee One', sans-serif;
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     font-size: 1em;
     resize: none;
     background-image: linear-gradient(#e0e0e0 1px, transparent 1px);
@@ -725,11 +727,15 @@ body {
 }
 
 #detail-title {
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     margin-bottom: 15px;
     color: var(--primary-color);
 }
 
 #detail-content {
+    /* フォントを変更 */
+    font-family: 'Zen Kurenaido', sans-serif;
     white-space: pre-wrap;
     line-height: 1.8;
 }
@@ -759,6 +765,36 @@ body {
 
 .rule-small {
     margin-left: 10px;
+}
+
+/* フィードバックコンテナ */
+.feedback-container {
+    background-color: #f0f8ff; /* 明るい青系の背景色 */
+    border-left: 4px solid #4a90e2; /* 左側のアクセントボーダー */
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.feedback-container h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.feedback-container p {
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+#feedback-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.feedback-loading {
+    font-style: italic;
+    color: #666;
+    margin-top: 10px;
 }
 
 /* レスポンシブデザイン */
@@ -794,41 +830,43 @@ body {
         padding-top: 12px;
         font-size: 0.8em;
     }
-    
+
     .friends-list {
         grid-template-columns: 1fr;
     }
-    
+
     .navbar {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .nav-links {
         width: 100%;
         justify-content: space-around;
     }
-    
+
     .nav-link {
         margin: 0 5px;
         padding: 5px;
     }
-    
+
     .nav-user {
         width: 100%;
         justify-content: space-between;
     }
-    
-    .diary-container, .diary-detail-container {
+
+    .diary-container,
+    .diary-detail-container {
         margin: 10px;
     }
-    
+
     .diary-detail-footer {
         flex-direction: column;
         gap: 15px;
     }
-    
-    .diary-stats, .diary-rules-small {
+
+    .diary-stats,
+    .diary-rules-small {
         text-align: center;
     }
     

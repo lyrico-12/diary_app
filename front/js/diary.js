@@ -2,6 +2,7 @@
 let diaryRules = null;
 let timerInterval = null;
 let remainingTime = 0;
+let currentCalendarDate = new Date();
 
 // 日記フィードの読み込み
 async function loadDiaryFeed() {
@@ -179,12 +180,12 @@ function createDiaryListItem(diary) {
     return listItem;
 }
 
-// カレンダーの更新
+// カレンダーの更新Add commentMore actions
 function updateCalendar(diaries) {
     const calendarGrid = document.getElementById('calendar-grid');
+    const currentMonth = currentCalendarDate.getMonth();
+    const currentYear = currentCalendarDate.getFullYear();
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
     
     // カレンダーのタイトル更新
     document.getElementById('calendar-title').textContent = `${currentYear}年${currentMonth + 1}月`;
@@ -244,7 +245,7 @@ function updateCalendar(diaries) {
     }
 }
 
-// 日記詳細を表示
+// 日記詳細の表示
 async function viewDiaryDetail(diaryId) {
     try {
         const response = await fetch(`${API_BASE_URL}/diary/${diaryId}`, {
@@ -270,12 +271,14 @@ async function viewDiaryDetail(diaryId) {
         document.getElementById('detail-date').textContent = formatDate(diary.created_at);
         document.getElementById('view-count').textContent = diary.view_count;
         document.getElementById('like-count').textContent = diary.like_count;
+        document.getElementById('like-btn').setAttribute('data-id', diary.id);
+
+        // ルールを表示
         document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
         document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
-        
-        // いいねボタンの状態を設定
-        const likeBtn = document.getElementById('like-btn');
-        likeBtn.setAttribute('data-id', diary.id);
+
+        // フィードバックセクションの初期化
+        initFeedbackSection(diaryId, diary.user_id);
         
         // 閲覧記録を残す（自分の日記でない場合）
         if (diary.user_id !== currentUser.id) {
@@ -291,6 +294,134 @@ async function viewDiaryDetail(diaryId) {
         console.error('Error viewing diary detail:', error);
     }
 }
+
+// フィードバックセクションの初期化と表示制御
+async function initFeedbackSection(diaryId, diaryUserId) {
+    const feedbackSection = document.getElementById('feedback-section');
+    const getFeedbackBtn = document.getElementById('get-feedback-btn');
+    const feedbackContainer = document.getElementById('feedback-container');
+    const feedbackLoading = document.getElementById('feedback-loading-state');
+
+    // 自分の日記の場合のみフィードバック機能を表示
+    if (diaryUserId !== currentUser.id) {
+        feedbackSection.classList.add('hidden');
+        return;
+    }
+    feedbackSection.classList.remove('hidden');
+
+    // 初期状態にリセット
+    getFeedbackBtn.classList.remove('hidden');
+    feedbackContainer.classList.add('hidden');
+    feedbackLoading.classList.add('hidden');
+    getFeedbackBtn.disabled = false;
+
+    // ボタンにdiaryIdを設定
+    getFeedbackBtn.setAttribute('data-id', diaryId);
+
+    // 既存のフィードバックがないか確認
+    await fetchAndDisplayFeedback(diaryId);
+}
+
+// 既存のフィードバックを取得して表示する
+async function fetchAndDisplayFeedback(diaryId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/${diaryId}/feedback`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const feedback = await response.json();
+            if (feedback && feedback.content) {
+                displayFeedback(feedback.content);
+            }
+        } 
+    } catch (error) {
+        // 既存フィードバックがない場合はボタンが表示されたままになるので、ここではエラーログのみ
+        console.error('Error fetching existing feedback:', error);
+    }
+}
+
+// フィードバック生成をリクエストする
+async function requestFeedback(diaryId) {
+    const getFeedbackBtn = document.getElementById('get-feedback-btn');
+    const feedbackLoading = document.getElementById('feedback-loading-state');
+
+    getFeedbackBtn.classList.add('hidden');
+    feedbackLoading.classList.remove('hidden');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/${diaryId}/feedback`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('フィードバックの生成リクエストに失敗しました。');
+        }
+
+        // 生成リクエスト後、ポーリングを開始してフィードバックを取得
+        pollForFeedback(diaryId);
+
+    } catch (error) {
+        console.error('Error requesting feedback:', error);
+        alert(error.message);
+        // エラー発生時はボタンを再表示
+        getFeedbackBtn.classList.remove('hidden');
+        feedbackLoading.classList.add('hidden');
+    }
+}
+
+// フィードバックが生成されるまでポーリングする
+function pollForFeedback(diaryId) {
+    let attempts = 0;
+    const maxAttempts = 10; // 最大10回試行 (合計約30秒)
+    const interval = 3000; // 3秒間隔
+
+    const intervalId = setInterval(async () => {
+        attempts++;
+        try {
+            const response = await fetch(`${API_BASE_URL}/diary/${diaryId}/feedback`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (response.ok) {
+                const feedback = await response.json();
+                if (feedback && feedback.content) {
+                    clearInterval(intervalId);
+                    displayFeedback(feedback.content);
+                    document.getElementById('feedback-loading-state').classList.add('hidden');
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+
+        if (attempts >= maxAttempts) {
+            clearInterval(intervalId);
+            alert('フィードバックの取得に時間がかかっています。後ほど再度お試しください。');
+            document.getElementById('get-feedback-btn').classList.remove('hidden');
+            document.getElementById('feedback-loading-state').classList.add('hidden');
+        }
+    }, interval);
+}
+
+// 取得したフィードバックを画面に表示する
+function displayFeedback(content) {
+    const feedbackContainer = document.getElementById('feedback-container');
+    const feedbackContent = document.getElementById('feedback-content');
+    
+    feedbackContent.textContent = content;
+    feedbackContainer.classList.remove('hidden');
+    document.getElementById('get-feedback-btn').classList.add('hidden');
+}
+
 
 // 新しい日記を書く
 async function startNewDiary() {
@@ -511,6 +642,12 @@ function setupDiaryListeners() {
         const diaryId = document.getElementById('like-btn').getAttribute('data-id');
         toggleLike(diaryId);
     });
+
+    // AIフィードバック取得ボタン
+    document.getElementById('get-feedback-btn').addEventListener('click', () => {
+        const diaryId = document.getElementById('get-feedback-btn').getAttribute('data-id');
+        requestFeedback(diaryId);
+    });
     
     // 文字数カウンター
     document.getElementById('diary-content').addEventListener('input', (e) => {
@@ -519,11 +656,13 @@ function setupDiaryListeners() {
     
     // 前の月ボタン
     document.getElementById('prev-month').addEventListener('click', () => {
-        // カレンダー月切り替え処理（実装省略）
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        loadMyDiaries();
     });
     
     // 次の月ボタン
     document.getElementById('next-month').addEventListener('click', () => {
-        // カレンダー月切り替え処理（実装省略）
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        loadMyDiaries();
     });
 }

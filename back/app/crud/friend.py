@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from datetime import datetime
 from typing import List, Optional
-from ..models.friend import FriendRequest, Notification, Feedback
+from ..models.friend import FriendRequest, Notification
+from ..models.diary import Feedback
 from ..models.user import User
 
 def get_friend_request(db: Session, request_id: int):

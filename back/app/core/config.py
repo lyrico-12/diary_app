@@ -17,5 +17,6 @@ class Settings(BaseSettings):
     DEFAULT_VIEW_LIMIT_DURATION_SEC: int = 86400  # デフォルトの閲覧可能時間（1日）
     TIME_LIMIT_OPTIONS: list = [180, 300, 420, 600]  # 3分, 5分, 7分, 10分
     CHAR_LIMIT_OPTIONS: list = [100, 200, 500, 0]  # 0は無制限
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
 
 settings = Settings()
