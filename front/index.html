@@ -77,13 +77,17 @@
                 <div id="home-content" class="content active">
                     <div class="content-header">
                         <h2>フレンドの日記</h2>
-                        <button id="new-diary-btn" class="btn primary-btn"><i class="fas fa-plus"></i> 新しい日記</button>
                     </div>
                     
                     <div id="diary-feed" class="diary-feed">
                         <!-- 日記カードはJSで動的に生成 -->
                         <p class="empty-state">まだ表示できる日記がありません。<br>フレンドを追加するか、自分で投稿してみましょう！</p>
                     </div>
+                    
+                    <!-- 新しい日記ボタン（画面中央下） -->
+                    <button id="new-diary-btn" class="floating-add-btn">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
                 
                 <!-- 自分の日記一覧 -->
