@@ -69,8 +69,8 @@ function createFriendCard(friend) {
 // フレンドの日記一覧を表示
 async function viewFriendDiaries(friendId) {
     try {
-        console.log('=== 特定フレンド日記取得開始 ===');
-        console.log('フレンドID:', friendId);
+        debugLog('=== 特定フレンド日記取得開始 ===');
+        debugLog('フレンドID:', friendId);
         
         // フレンド情報を取得
         const friendResponse = await fetch(`${API_BASE_URL}/users/${friendId}`, {
