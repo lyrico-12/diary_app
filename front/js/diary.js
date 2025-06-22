@@ -222,8 +222,6 @@ function createCalendarDay(date, hasDiary, diaryData = null) {
     
     // 日記がある場合の処理
     if (hasDiary && diaryData) {
-        dayElement.classList.add('has-diary');
-        
         // 感情分析に応じた背景色を適用
         if (diaryData.emotion_analysis) {
             const emotionClass = `emotion-${diaryData.emotion_analysis}`;
@@ -237,7 +235,7 @@ function createCalendarDay(date, hasDiary, diaryData = null) {
         });
     } else if (hasDiary) {
         // 日記データがない場合（前月・翌月の日付など）
-        dayElement.classList.add('has-diary');
+        // 何もしない（背景色は適用しない）
     }
     
     // 日付を表示
