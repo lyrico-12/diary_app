@@ -456,28 +456,35 @@ body {
 
 /* 感情に応じた背景色 - has-diaryよりも後に配置して優先度を高くする */
 .calendar-day.has-diary.emotion-very-unhappy {
-    background-color: #8B5CF6 !important; /* 紫 */
-    color: white !important;
+    background-color: #F3E8FF !important; /* より薄い紫 */
+    color: #7C3AED !important;
 }
 
 .calendar-day.has-diary.emotion-unhappy {
-    background-color: #3B82F6 !important; /* 藍色 */
-    color: white !important;
+    background-color: #F3E8FF !important; /* 薄い紫 */
+    color: #7C3AED !important;
 }
 
 .calendar-day.has-diary.emotion-normal {
-    background-color: #60A5FA !important; /* 水色 */
-    color: white !important;
+    background-color: #E0F2FE !important; /* 薄い水色 */
+    color: #0369A1 !important;
 }
 
 .calendar-day.has-diary.emotion-happy {
-    background-color: #FCD34D !important; /* 黄色 */
-    color: #333 !important;
+    background-color: #FEF3C7 !important; /* 薄い黄色 */
+    color: #92400E !important;
 }
 
+/* very_happyを最後に配置して優先度を高くする */
 .calendar-day.has-diary.emotion-very-happy {
-    background-color: #FB923C !important; /* オレンジ色 */
-    color: white !important;
+    background-color: #FED7AA !important; /* 薄いオレンジ色 */
+    color: #C2410C !important;
+}
+
+/* より高い優先度でvery_happyを定義 */
+div.calendar-day.has-diary.emotion-very-happy {
+    background-color: #FED7AA !important; /* 薄いオレンジ色 */
+    color: #C2410C !important;
 }
 
 .calendar-day-header {

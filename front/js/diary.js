@@ -70,11 +70,13 @@ async function loadMyDiaries() {
         
         const diaries = await response.json();
         
-        // 現在のカレンダー月の日記をフィルタ
+        // 現在のカレンダー月の日記をフィルタ（日本時間で処理）
         const currentMonthDiaries = diaries.filter(diary => {
             const diaryDate = new Date(diary.created_at);
-            return diaryDate.getFullYear() === currentCalendarDate.getFullYear() &&
-                   diaryDate.getMonth() === currentCalendarDate.getMonth();
+            // 日本時間に変換（UTC+9時間）
+            const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+            return jstDate.getFullYear() === currentCalendarDate.getFullYear() &&
+                   jstDate.getMonth() === currentCalendarDate.getMonth();
         });
         
         // カレンダーを生成
@@ -208,7 +210,9 @@ function createDiaryListItem(diary) {
 function createCalendarDay(date, hasDiary, diaryData = null) {
     const dayElement = document.createElement('div');
     dayElement.className = 'calendar-day';
-    dayElement.setAttribute('data-date', date.toISOString().split('T')[0]);
+    // 日本時間でdata-dateを設定
+    const jstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+    dayElement.setAttribute('data-date', jstDate.toISOString().split('T')[0]);
     
     // 今日の日付かチェック
     const today = new Date();
@@ -224,7 +228,7 @@ function createCalendarDay(date, hasDiary, diaryData = null) {
         if (diaryData.emotion_analysis) {
             const emotionClass = `emotion-${diaryData.emotion_analysis}`;
             dayElement.classList.add(emotionClass);
-            console.log(`日付 ${date.toISOString().split('T')[0]} に感情クラス ${emotionClass} を適用`);
+            console.log(`日付 ${jstDate.toISOString().split('T')[0]} に感情クラス ${emotionClass} を適用`);
         }
         
         // クリックイベント（日記詳細表示）
@@ -320,10 +324,14 @@ function generateCalendar(year, month, diaries) {
         const date = new Date(year, month - 1, day);
         const dateString = date.toISOString().split('T')[0];
         
-        // その日の全ての日記を探す
+        // その日の全ての日記を探す（日本時間で処理）
         const dayDiaries = diaries.filter(diary => {
             const diaryDate = new Date(diary.created_at);
-            return diaryDate.toISOString().split('T')[0] === dateString;
+            // 日本時間に変換（UTC+9時間）
+            const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+            // カレンダーの日付も日本時間で比較
+            const calendarDateJST = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+            return jstDate.toISOString().split('T')[0] === calendarDateJST.toISOString().split('T')[0];
         });
         
         console.log(`日付 ${dateString} の日記数:`, dayDiaries.length);
@@ -376,7 +384,12 @@ async function viewDiaryDetail(diaryId) {
         document.getElementById('detail-title').textContent = diary.title || '無題の日記';
         document.getElementById('detail-content').textContent = diary.content;
         document.getElementById('detail-author').textContent = diary.user?.username || 'ユーザー';
-        document.getElementById('detail-date').textContent = formatDate(diary.created_at);
+        
+        // 日付を日本時間で表示
+        const diaryDate = new Date(diary.created_at);
+        const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+        document.getElementById('detail-date').textContent = formatDate(jstDate.toISOString());
+        
         document.getElementById('view-count').textContent = diary.view_count;
         document.getElementById('like-count').textContent = diary.like_count;
         document.getElementById('like-btn').setAttribute('data-id', diary.id);
@@ -384,7 +397,7 @@ async function viewDiaryDetail(diaryId) {
         // ルールを表示
         document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
         document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
-
+        
         // 感情分析結果を表示
         const emotionElement = document.getElementById('detail-emotion');
         const emotionLargeElement = document.getElementById('detail-emotion-large');
@@ -724,7 +737,24 @@ async function deleteDiary(diaryId) {
         document.getElementById('nav-my-diaries').click();
         
         // 日記一覧を再読み込み
-        loadMyDiaries();
+        await loadMyDiaries();
+        
+        // カレンダーも再生成（現在の年月で）
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        // 日記データを再取得してカレンダーを更新
+        const diariesResponse = await fetch(`${API_BASE_URL}/diary/my`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (diariesResponse.ok) {
+            const diaries = await diariesResponse.json();
+            generateCalendar(currentYear, currentMonth, diaries);
+        }
         
     } catch (error) {
         console.error('Error deleting diary:', error);
@@ -856,6 +886,23 @@ async function submitDiary() {
         
         // ホーム画面のフィードも更新
         await loadDiaryFeed();
+        
+        // カレンダーも更新（現在の年月で）
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        // 日記データを再取得してカレンダーを更新
+        const diariesResponse = await fetch(`${API_BASE_URL}/diary/my`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (diariesResponse.ok) {
+            const diaries = await diariesResponse.json();
+            generateCalendar(currentYear, currentMonth, diaries);
+        }
         
     } catch (error) {
         console.error('Error submitting diary:', error);
@@ -1240,7 +1287,9 @@ function generateEmotionSummary(diaries) {
     const uniqueDates = new Set();
     diaries.forEach(diary => {
         const diaryDate = new Date(diary.created_at);
-        const dateString = diaryDate.toISOString().split('T')[0];
+        // 日本時間に変換（UTC+9時間）
+        const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+        const dateString = jstDate.toISOString().split('T')[0];
         uniqueDates.add(dateString);
     });
     const uniqueDateCount = uniqueDates.size;
