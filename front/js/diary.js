@@ -55,7 +55,7 @@ async function loadDiaryFeed() {
     }
 }
 
-// 自分の日記一覧の読み込み
+// 自分の日記一覧を読み込む
 async function loadMyDiaries() {
     try {
         const response = await fetch(`${API_BASE_URL}/diary/my`, {
@@ -70,30 +70,34 @@ async function loadMyDiaries() {
         
         const diaries = await response.json();
         
-        const diaryListContainer = document.getElementById('my-diary-list');
-        
-        // 空の状態メッセージをクリア
-        diaryListContainer.innerHTML = '';
-        
-        if (diaries.length === 0) {
-            diaryListContainer.innerHTML = '<p class="empty-state">まだ日記を書いていません。<br>右上の「新しい日記」ボタンから投稿してみましょう！</p>';
-            return;
-        }
-        
-        // 日記リストアイテムを作成
-        diaries.forEach(diary => {
-            const listItem = createDiaryListItem(diary);
-            diaryListContainer.appendChild(listItem);
+        // 現在のカレンダー月の日記をフィルタ（日本時間で処理）
+        const currentMonthDiaries = diaries.filter(diary => {
+            const diaryDate = new Date(diary.created_at);
+            // 日本時間に変換（UTC+9時間）
+            const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+            return jstDate.getFullYear() === currentCalendarDate.getFullYear() &&
+                   jstDate.getMonth() === currentCalendarDate.getMonth();
         });
         
-        // カレンダーも更新
-        updateCalendar(diaries);
+        // カレンダーを生成
+        generateCalendar(
+            currentCalendarDate.getFullYear(),
+            currentCalendarDate.getMonth() + 1,
+            currentMonthDiaries
+        );
+        
+        // 感情サマリーを生成
+        generateEmotionSummary(currentMonthDiaries);
+        
+        // 日記リストを更新
+        updateDiaryList(diaries);
         
         // 月ごとのフィードバックセクションを初期化
         await initMonthlyFeedbackSection();
         
     } catch (error) {
-        console.error('Error loading my diaries:', error);
+        console.error('Error loading diaries:', error);
+        alert('日記の読み込みに失敗しました');
     }
 }
 
@@ -189,6 +193,7 @@ function createDiaryListItem(diary) {
             <div class="diary-stats">
                 <span><i class="fas fa-eye"></i> ${diary.view_count}</span>
                 <span><i class="fas fa-heart"></i> ${diary.like_count}</span>
+                ${diary.emotion_analysis ? `<span class="emotion-stat"><span class="emotion-icon">${getEmotionIcon(diary.emotion_analysis)}</span></span>` : ''}
             </div>
         </div>
     `;
@@ -201,69 +206,157 @@ function createDiaryListItem(diary) {
     return listItem;
 }
 
-// カレンダーの更新Add commentMore actions
-function updateCalendar(diaries) {
+// カレンダーの日付セルを作成
+function createCalendarDay(date, hasDiary, diaryData = null) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    // 日本時間でdata-dateを設定
+    const jstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+    dayElement.setAttribute('data-date', jstDate.toISOString().split('T')[0]);
+    
+    // 今日の日付かチェック
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+        dayElement.classList.add('today');
+    }
+    
+    // 日記がある場合の処理
+    if (hasDiary && diaryData) {
+        // 感情分析に応じた背景色を適用
+        if (diaryData.emotion_analysis) {
+            const emotionClass = `emotion-${diaryData.emotion_analysis}`;
+            dayElement.classList.add(emotionClass);
+            console.log(`日付 ${jstDate.toISOString().split('T')[0]} に感情クラス ${emotionClass} を適用`);
+        }
+        
+        // クリックイベント（日記詳細表示）
+        dayElement.addEventListener('click', () => {
+            viewDiaryDetail(diaryData.id);
+        });
+    } else if (hasDiary) {
+        // 日記データがない場合（前月・翌月の日付など）
+        // 何もしない（背景色は適用しない）
+    }
+    
+    // 日付を表示
+    dayElement.textContent = date.getDate();
+    
+    return dayElement;
+}
+
+// その日の日記の感情分析サマリーを計算
+function calculateDayEmotionSummary(dayDiaries) {
+    if (!dayDiaries || dayDiaries.length === 0) return null;
+    
+    console.log('その日の日記数:', dayDiaries.length);
+    
+    // 感情の統計を計算
+    const emotionStats = {
+        'very_happy': 0,
+        'happy': 0,
+        'normal': 0,
+        'unhappy': 0,
+        'very_unhappy': 0
+    };
+    
+    dayDiaries.forEach(diary => {
+        console.log('日記の感情分析:', diary.emotion_analysis);
+        if (diary.emotion_analysis && emotionStats.hasOwnProperty(diary.emotion_analysis)) {
+            emotionStats[diary.emotion_analysis]++;
+        }
+    });
+    
+    console.log('感情統計:', emotionStats);
+    
+    // 最も多い感情を特定
+    const mostFrequentEmotion = Object.entries(emotionStats).reduce((a, b) => 
+        emotionStats[a[0]] > emotionStats[b[0]] ? a : b
+    )[0];
+    
+    console.log('最も多い感情:', mostFrequentEmotion);
+    
+    return mostFrequentEmotion;
+}
+
+// カレンダーを生成
+function generateCalendar(year, month, diaries) {
     const calendarGrid = document.getElementById('calendar-grid');
-    const currentMonth = currentCalendarDate.getMonth();
-    const currentYear = currentCalendarDate.getFullYear();
-    const now = new Date();
+    const calendarTitle = document.getElementById('calendar-title');
     
-    // カレンダーのタイトル更新
-    document.getElementById('calendar-title').textContent = `${currentYear}年${currentMonth + 1}月`;
+    if (!calendarGrid || !calendarTitle) return;
     
-    // カレンダーグリッドをクリア
+    console.log('カレンダー生成開始:', year, month);
+    console.log('日記データ数:', diaries.length);
+    console.log('日記データ:', diaries);
+    
+    // タイトルを更新
+    calendarTitle.textContent = `${year}年${month}月`;
+    
+    // カレンダーをクリア
     calendarGrid.innerHTML = '';
     
     // 曜日ヘッダーを追加
-    const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
-    daysOfWeek.forEach(day => {
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    weekdays.forEach(day => {
         const dayHeader = document.createElement('div');
         dayHeader.className = 'calendar-day-header';
         dayHeader.textContent = day;
         calendarGrid.appendChild(dayHeader);
     });
     
-    // 月の最初の日の曜日を取得
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    // 月の最初の日を取得
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
     
-    // 月の日数を取得
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-    // 日記の日付を整理
-    const diaryDates = {};
-    diaries.forEach(diary => {
-        const diaryDate = new Date(diary.created_at);
-        if (diaryDate.getMonth() === currentMonth && diaryDate.getFullYear() === currentYear) {
-            const day = diaryDate.getDate();
-            diaryDates[day] = true;
-        }
-    });
-    
-    // 前月の空白セルを追加
-    for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-day empty';
-        calendarGrid.appendChild(emptyCell);
+    // 前月の日付を追加（最初の週を埋めるため）
+    const firstDayOfWeek = firstDay.getDay();
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        const prevDate = new Date(year, month - 1, -i);
+        const dayElement = createCalendarDay(prevDate, false);
+        dayElement.style.opacity = '0.3';
+        calendarGrid.appendChild(dayElement);
     }
     
-    // 日付セルを追加
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayCell = document.createElement('div');
-        dayCell.className = 'calendar-day';
-        dayCell.textContent = day;
+    // 当月の日付を追加
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month - 1, day);
+        const dateString = date.toISOString().split('T')[0];
         
-        // 日記がある日はクラスを追加
-        if (diaryDates[day]) {
-            dayCell.classList.add('has-diary');
-        }
+        // その日の全ての日記を探す（日本時間で処理）
+        const dayDiaries = diaries.filter(diary => {
+            const diaryDate = new Date(diary.created_at);
+            // 日本時間に変換（UTC+9時間）
+            const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+            // カレンダーの日付も日本時間で比較
+            const calendarDateJST = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+            return jstDate.toISOString().split('T')[0] === calendarDateJST.toISOString().split('T')[0];
+        });
         
-        // 今日の日付にはクラスを追加
-        if (day === now.getDate() && currentMonth === now.getMonth() && currentYear === now.getFullYear()) {
-            dayCell.classList.add('today');
-        }
+        console.log(`日付 ${dateString} の日記数:`, dayDiaries.length);
         
-        calendarGrid.appendChild(dayCell);
+        // その日の感情分析サマリーを計算
+        const dayEmotionSummary = calculateDayEmotionSummary(dayDiaries);
+        
+        // 日記データオブジェクトを作成（感情分析サマリーを含む）
+        const dayDiaryData = dayDiaries.length > 0 ? {
+            ...dayDiaries[0], // 最初の日記の基本情報を使用
+            emotion_analysis: dayEmotionSummary // サマリー感情分析を使用
+        } : null;
+        
+        const dayElement = createCalendarDay(date, dayDiaries.length > 0, dayDiaryData);
+        calendarGrid.appendChild(dayElement);
     }
+    
+    // 翌月の日付を追加（最後の週を埋めるため）
+    const lastDayOfWeek = lastDay.getDay();
+    for (let i = 1; i <= 6 - lastDayOfWeek; i++) {
+        const nextDate = new Date(year, month, i);
+        const dayElement = createCalendarDay(nextDate, false);
+        dayElement.style.opacity = '0.3';
+        calendarGrid.appendChild(dayElement);
+    }
+    
+    console.log('カレンダー生成完了');
 }
 
 // 日記詳細の表示
@@ -289,7 +382,12 @@ async function viewDiaryDetail(diaryId) {
         document.getElementById('detail-title').textContent = diary.title || '無題の日記';
         document.getElementById('detail-content').textContent = diary.content;
         document.getElementById('detail-author').textContent = diary.user?.username || 'ユーザー';
-        document.getElementById('detail-date').textContent = formatDate(diary.created_at);
+        
+        // 日付を日本時間で表示
+        const diaryDate = new Date(diary.created_at);
+        const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+        document.getElementById('detail-date').textContent = formatDate(jstDate.toISOString());
+        
         document.getElementById('view-count').textContent = diary.view_count;
         document.getElementById('like-count').textContent = diary.like_count;
         document.getElementById('like-btn').setAttribute('data-id', diary.id);
@@ -297,6 +395,30 @@ async function viewDiaryDetail(diaryId) {
         // ルールを表示
         document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
         document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
+        
+        // 感情分析結果を表示
+        const emotionElement = document.getElementById('detail-emotion');
+        const emotionLargeElement = document.getElementById('detail-emotion-large');
+        
+        if (diary.emotion_analysis) {
+            // 大きな感情分析アイコンを表示
+            if (emotionLargeElement) {
+                emotionLargeElement.innerHTML = getEmotionIcon(diary.emotion_analysis);
+                emotionLargeElement.classList.remove('hidden');
+            }
+            // 小さな感情分析アイコンは非表示
+            if (emotionElement) {
+                emotionElement.classList.add('hidden');
+            }
+        } else {
+            // 感情分析がない場合は両方とも非表示
+            if (emotionLargeElement) {
+                emotionLargeElement.classList.add('hidden');
+            }
+            if (emotionElement) {
+                emotionElement.classList.add('hidden');
+            }
+        }
 
         // 自分の日記の場合のみ削除ボタンを表示
         const deleteBtn = document.getElementById('delete-diary-btn');
@@ -468,15 +590,96 @@ function displayFeedback(content) {
     document.getElementById('get-feedback-btn').classList.add('hidden');
 }
 
-// 月ごとのフィードバック生成をリクエストする
-async function requestMonthlyFeedback(year, month) {
-    const getMonthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
-    const monthlyFeedbackLoading = document.getElementById('monthly-feedback-loading-state');
-
-    getMonthlyFeedbackBtn.classList.add('hidden');
-    monthlyFeedbackLoading.classList.remove('hidden');
-
+// 月ごとのフィードバックセクションの初期化
+async function initMonthlyFeedbackSection() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth() + 1;
+    
+    // ボタンに年月を設定
+    const monthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
+    if (monthlyFeedbackBtn) {
+        monthlyFeedbackBtn.setAttribute('data-year', year);
+        monthlyFeedbackBtn.setAttribute('data-month', month);
+    }
+    
+    // 現在の月の日記データを取得して、日記がない場合は「データなし」を表示
     try {
+        const diariesResponse = await fetch(`${API_BASE_URL}/diary/my`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (diariesResponse.ok) {
+            const allDiaries = await diariesResponse.json();
+            
+            // 現在の月の日記をフィルタ（日本時間で処理）
+            const currentMonthDiaries = allDiaries.filter(diary => {
+                const diaryDate = new Date(diary.created_at);
+                // 日本時間に変換（UTC+9時間）
+                const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+                return jstDate.getFullYear() === year && jstDate.getMonth() === month - 1;
+            });
+            
+            // 日記がない場合は「データなし」を表示
+            if (currentMonthDiaries.length === 0) {
+                const container = document.getElementById('monthly-feedback-container');
+                const contentElement = document.getElementById('monthly-feedback-content');
+                
+                if (container && contentElement) {
+                    contentElement.innerHTML = `
+                        <div style="text-align: center; color: var(--text-light); padding: 20px;">
+                            <i class="fas fa-calendar-times" style="font-size: 2em; margin-bottom: 10px;"></i>
+                            <p>この月のデータがありません</p>
+                        </div>
+                    `;
+                    container.classList.remove('hidden');
+                    document.getElementById('get-monthly-feedback-btn').classList.add('hidden');
+                }
+                return;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking monthly diaries:', error);
+    }
+    
+    // 既存の月ごとフィードバックがあれば表示
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const feedback = await response.json();
+            displayMonthlyFeedback(feedback.content);
+        }
+    } catch (error) {
+        // フィードバックが存在しない場合は静かに処理
+        console.log('No monthly feedback found');
+    }
+}
+
+// 月ごとフィードバックを表示
+function displayMonthlyFeedback(content) {
+    const container = document.getElementById('monthly-feedback-container');
+    const contentElement = document.getElementById('monthly-feedback-content');
+    
+    if (container && contentElement) {
+        contentElement.textContent = content;
+        container.classList.remove('hidden');
+        document.getElementById('get-monthly-feedback-btn').classList.add('hidden');
+    }
+}
+
+// 月ごとフィードバックをリクエスト
+async function requestMonthlyFeedback(year, month) {
+    try {
+        // ボタンを非表示にしてローディング状態を表示
+        document.getElementById('get-monthly-feedback-btn').classList.add('hidden');
+        document.getElementById('monthly-feedback-loading-state').classList.remove('hidden');
+        
         const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
             method: 'POST',
             headers: {
@@ -485,25 +688,26 @@ async function requestMonthlyFeedback(year, month) {
         });
 
         if (!response.ok) {
-            throw new Error('月ごとフィードバックの生成リクエストに失敗しました。');
+            throw new Error('月ごとフィードバックの生成に失敗しました');
         }
 
-        // 生成リクエスト後、ポーリングを開始してフィードバックを取得
+        // フィードバックが生成されるまでポーリング
         pollForMonthlyFeedback(year, month);
 
     } catch (error) {
         console.error('Error requesting monthly feedback:', error);
-        alert(error.message);
-        // エラー発生時はボタンを再表示
-        getMonthlyFeedbackBtn.classList.remove('hidden');
-        monthlyFeedbackLoading.classList.add('hidden');
+        alert('月ごとフィードバックの生成に失敗しました');
+        
+        // エラー時はボタンを再表示
+        document.getElementById('get-monthly-feedback-btn').classList.remove('hidden');
+        document.getElementById('monthly-feedback-loading-state').classList.add('hidden');
     }
 }
 
-// 月ごとのフィードバックが生成されるまでポーリングする
+// 月ごとフィードバックが生成されるまでポーリングする
 function pollForMonthlyFeedback(year, month) {
     let attempts = 0;
-    const maxAttempts = 10; // 最大10回試行 (合計約30秒)
+    const maxAttempts = 15; // 最大15回試行 (合計約45秒)
     const interval = 3000; // 3秒間隔
 
     const intervalId = setInterval(async () => {
@@ -524,10 +728,9 @@ function pollForMonthlyFeedback(year, month) {
                     return;
                 }
             } else if (response.status === 404) {
-                // 月ごとフィードバックがまだ生成されていない場合は静かに処理（エラーログを出力しない）
+                // フィードバックがまだ生成されていない場合は静かに処理
                 return;
             } else {
-                // その他のエラーの場合のみログを出力
                 console.error('Monthly feedback polling error:', response.status, response.statusText);
             }
         } catch (error) {
@@ -541,68 +744,6 @@ function pollForMonthlyFeedback(year, month) {
             document.getElementById('monthly-feedback-loading-state').classList.add('hidden');
         }
     }, interval);
-}
-
-// 取得した月ごとのフィードバックを画面に表示する
-function displayMonthlyFeedback(content) {
-    const monthlyFeedbackContainer = document.getElementById('monthly-feedback-container');
-    const monthlyFeedbackContent = document.getElementById('monthly-feedback-content');
-    
-    monthlyFeedbackContent.textContent = content;
-    monthlyFeedbackContainer.classList.remove('hidden');
-    document.getElementById('get-monthly-feedback-btn').classList.add('hidden');
-}
-
-// 既存の月ごとフィードバックを取得して表示する
-async function fetchAndDisplayMonthlyFeedback(year, month) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const feedback = await response.json();
-            if (feedback && feedback.content) {
-                displayMonthlyFeedback(feedback.content);
-            }
-        } else if (response.status === 404) {
-            // 月ごとフィードバックが存在しない場合は静かに処理（エラーログを出力しない）
-            return;
-        } else {
-            // その他のエラーの場合のみログを出力
-            console.error('Error fetching monthly feedback:', response.status, response.statusText);
-        }
-    } catch (error) {
-        // ネットワークエラーなどの場合のみログを出力
-        console.error('Network error fetching monthly feedback:', error);
-    }
-}
-
-// 月ごとのフィードバックセクションの初期化
-async function initMonthlyFeedbackSection() {
-    const monthlyFeedbackSection = document.getElementById('monthly-feedback-section');
-    const getMonthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
-    const monthlyFeedbackContainer = document.getElementById('monthly-feedback-container');
-    const monthlyFeedbackLoading = document.getElementById('monthly-feedback-loading-state');
-
-    // 初期状態にリセット
-    getMonthlyFeedbackBtn.classList.remove('hidden');
-    monthlyFeedbackContainer.classList.add('hidden');
-    monthlyFeedbackLoading.classList.add('hidden');
-    getMonthlyFeedbackBtn.disabled = false;
-
-    // 現在のカレンダー年月を取得
-    const year = currentCalendarDate.getFullYear();
-    const month = currentCalendarDate.getMonth() + 1;
-
-    // ボタンに年月を設定
-    getMonthlyFeedbackBtn.setAttribute('data-year', year);
-    getMonthlyFeedbackBtn.setAttribute('data-month', month);
-
-    // 既存のフィードバックがないか確認
-    await fetchAndDisplayMonthlyFeedback(year, month);
 }
 
 // 日記を削除する
@@ -635,7 +776,24 @@ async function deleteDiary(diaryId) {
         document.getElementById('nav-my-diaries').click();
         
         // 日記一覧を再読み込み
-        loadMyDiaries();
+        await loadMyDiaries();
+        
+        // カレンダーも再生成（現在の年月で）
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        // 日記データを再取得してカレンダーを更新
+        const diariesResponse = await fetch(`${API_BASE_URL}/diary/my`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (diariesResponse.ok) {
+            const diaries = await diariesResponse.json();
+            generateCalendar(currentYear, currentMonth, diaries);
+        }
         
     } catch (error) {
         console.error('Error deleting diary:', error);
@@ -768,10 +926,119 @@ async function submitDiary() {
         // ホーム画面のフィードも更新
         await loadDiaryFeed();
         
+        // カレンダーも更新（現在の年月で）
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        // 日記データを再取得してカレンダーを更新
+        const diariesResponse = await fetch(`${API_BASE_URL}/diary/my`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (diariesResponse.ok) {
+            const diaries = await diariesResponse.json();
+            generateCalendar(currentYear, currentMonth, diaries);
+        }
+        
     } catch (error) {
         console.error('Error submitting diary:', error);
         alert('日記の投稿に失敗しました: ' + error.message);
     }
+}
+
+// 日記リストを更新
+function updateDiaryList(diaries) {
+    const diaryListContainer = document.getElementById('my-diary-list');
+    
+    // 空の状態メッセージをクリア
+    diaryListContainer.innerHTML = '';
+    
+    if (diaries.length === 0) {
+        diaryListContainer.innerHTML = '<p class="empty-state">まだ日記を書いていません。<br>右上の「新しい日記」ボタンから投稿してみましょう！</p>';
+        return;
+    }
+    
+    // 日記リストアイテムを作成
+    diaries.forEach(diary => {
+        const listItem = createDiaryListItem(diary);
+        diaryListContainer.appendChild(listItem);
+    });
+}
+
+// 日記関連のイベントリスナー設定
+function setupDiaryListeners() {
+    // 新しい日記ボタン
+    document.getElementById('new-diary-btn').addEventListener('click', () => {
+        startNewDiary();
+    });
+    
+    // 日記投稿ボタン
+    document.getElementById('submit-diary-btn').addEventListener('click', () => {
+        submitDiary();
+    });
+    
+    // 日記キャンセルボタン
+    document.getElementById('cancel-diary-btn').addEventListener('click', () => {
+        if (confirm('本当にキャンセルしますか？入力した内容は失われます。')) {
+            // タイマーを停止
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            document.getElementById('diary-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+        }
+    });
+    
+    // 詳細画面の戻るボタン
+    document.getElementById('back-btn').addEventListener('click', () => {
+        document.getElementById('diary-detail-screen').classList.add('hidden');
+        document.getElementById('main-screen').classList.remove('hidden');
+    });
+    
+    // いいねボタン
+    document.getElementById('like-btn').addEventListener('click', () => {
+        const diaryId = document.getElementById('like-btn').getAttribute('data-id');
+        toggleLike(diaryId);
+    });
+
+    // AIフィードバック取得ボタン
+    document.getElementById('get-feedback-btn').addEventListener('click', () => {
+        const diaryId = document.getElementById('get-feedback-btn').getAttribute('data-id');
+        requestFeedback(diaryId);
+    });
+    
+    // 削除ボタン
+    document.getElementById('delete-diary-btn').addEventListener('click', () => {
+        const diaryId = document.getElementById('delete-diary-btn').getAttribute('data-id');
+        deleteDiary(diaryId);
+    });
+    
+    // 文字数カウンター
+    document.getElementById('diary-content').addEventListener('input', (e) => {
+        document.getElementById('char-count').textContent = e.target.value.length;
+    });
+    
+    // 前の月ボタン
+    document.getElementById('prev-month').addEventListener('click', () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        loadMyDiaries();
+    });
+    
+    // 次の月ボタン
+    document.getElementById('next-month').addEventListener('click', () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        loadMyDiaries();
+    });
+    
+    // 月ごとフィードバック取得ボタン
+    document.getElementById('get-monthly-feedback-btn').addEventListener('click', () => {
+        const year = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-year'));
+        const month = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-month'));
+        requestMonthlyFeedback(year, month);
+    });
 }
 
 // いいね機能（カードから呼び出し）
@@ -976,75 +1243,132 @@ function formatTime(seconds) {
     return `${minutes}分${remainingSeconds > 0 ? remainingSeconds + '秒' : ''}`;
 }
 
-// 日記関連のイベントリスナー設定
-function setupDiaryListeners() {
-    // 新しい日記ボタン
-    document.getElementById('new-diary-btn').addEventListener('click', () => {
-        startNewDiary();
-    });
+// 感情分析結果に対応する顔文字アイコンを取得
+function getEmotionIcon(emotion) {
+    const emotionIcons = {
+        'very_happy': '😄',
+        'happy': '🙂',
+        'normal': '😐',
+        'unhappy': '😔',
+        'very_unhappy': '😢'
+    };
+    return emotionIcons[emotion] || '😐';
+}
+
+// 感情分析結果の日本語表示名を取得
+function getEmotionText(emotion) {
+    const emotionTexts = {
+        'very_happy': 'とても幸せ',
+        'happy': '幸せ',
+        'normal': '普通',
+        'unhappy': '悲しい',
+        'very_unhappy': 'とても悲しい'
+    };
+    return emotionTexts[emotion] || '普通';
+}
+
+// 感情の色を取得
+function getEmotionColor(emotion) {
+    const emotionColors = {
+        'very_happy': '#ff6b6b',
+        'happy': '#4ecdc4',
+        'normal': '#45b7d1',
+        'unhappy': '#96ceb4',
+        'very_unhappy': '#feca57'
+    };
+    return emotionColors[emotion] || '#45b7d1';
+}
+
+// 感情の数値スコアを取得（チャート用）
+function getEmotionScore(emotion) {
+    const emotionScores = {
+        'very_happy': 5,
+        'happy': 4,
+        'normal': 3,
+        'unhappy': 2,
+        'very_unhappy': 1
+    };
+    return emotionScores[emotion] || 3;
+}
+
+// 感情サマリーを生成
+function generateEmotionSummary(diaries) {
+    const summaryContainer = document.getElementById('emotion-summary');
+    if (!summaryContainer) return;
     
-    // 日記投稿ボタン
-    document.getElementById('submit-diary-btn').addEventListener('click', () => {
-        submitDiary();
-    });
+    // 日記がない場合は「データなし」を表示
+    if (!diaries || diaries.length === 0) {
+        summaryContainer.innerHTML = `
+            <div class="emotion-summary-item" style="grid-column: 1 / -1; text-align: center;">
+                <div class="emotion-summary-icon" style="color: var(--text-light)">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <div class="emotion-summary-label">この月のデータ</div>
+                <div class="emotion-summary-count">データなし</div>
+            </div>
+        `;
+        return;
+    }
     
-    // 日記キャンセルボタン
-    document.getElementById('cancel-diary-btn').addEventListener('click', () => {
-        if (confirm('本当にキャンセルしますか？入力した内容は失われます。')) {
-            // タイマーを停止
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-            document.getElementById('diary-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
+    // 感情の統計を計算
+    const emotionStats = {
+        'very_happy': 0,
+        'happy': 0,
+        'normal': 0,
+        'unhappy': 0,
+        'very_unhappy': 0
+    };
+    
+    diaries.forEach(diary => {
+        if (diary.emotion_analysis && emotionStats.hasOwnProperty(diary.emotion_analysis)) {
+            emotionStats[diary.emotion_analysis]++;
         }
     });
     
-    // 詳細画面の戻るボタン
-    document.getElementById('back-btn').addEventListener('click', () => {
-        document.getElementById('diary-detail-screen').classList.add('hidden');
-        document.getElementById('main-screen').classList.remove('hidden');
-    });
+    // 最も多い感情を特定
+    const mostFrequentEmotion = Object.entries(emotionStats).reduce((a, b) => 
+        emotionStats[a[0]] > emotionStats[b[0]] ? a : b
+    )[0];
     
-    // いいねボタン
-    document.getElementById('like-btn').addEventListener('click', () => {
-        const diaryId = document.getElementById('like-btn').getAttribute('data-id');
-        toggleLike(diaryId);
-    });
-
-    // AIフィードバック取得ボタン
-    document.getElementById('get-feedback-btn').addEventListener('click', () => {
-        const diaryId = document.getElementById('get-feedback-btn').getAttribute('data-id');
-        requestFeedback(diaryId);
-    });
+    // 平均感情スコアを計算
+    const totalScore = diaries.reduce((sum, diary) => {
+        return sum + getEmotionScore(diary.emotion_analysis || 'normal');
+    }, 0);
+    const averageScore = diaries.length > 0 ? totalScore / diaries.length : 3;
     
-    // 削除ボタン
-    document.getElementById('delete-diary-btn').addEventListener('click', () => {
-        const diaryId = document.getElementById('delete-diary-btn').getAttribute('data-id');
-        deleteDiary(diaryId);
+    // ユニークな投稿日数を計算
+    const uniqueDates = new Set();
+    diaries.forEach(diary => {
+        const diaryDate = new Date(diary.created_at);
+        // 日本時間に変換（UTC+9時間）
+        const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+        const dateString = jstDate.toISOString().split('T')[0];
+        uniqueDates.add(dateString);
     });
+    const uniqueDateCount = uniqueDates.size;
     
-    // 文字数カウンター
-    document.getElementById('diary-content').addEventListener('input', (e) => {
-        document.getElementById('char-count').textContent = e.target.value.length;
-    });
-    
-    // 前の月ボタン
-    document.getElementById('prev-month').addEventListener('click', () => {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-        loadMyDiaries();
-    });
-    
-    // 次の月ボタン
-    document.getElementById('next-month').addEventListener('click', () => {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-        loadMyDiaries();
-    });
-    
-    // 月ごとフィードバック取得ボタン
-    document.getElementById('get-monthly-feedback-btn').addEventListener('click', () => {
-        const year = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-year'));
-        const month = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-month'));
-        requestMonthlyFeedback(year, month);
-    });
+    // サマリーを生成
+    summaryContainer.innerHTML = `
+        <div class="emotion-summary-item">
+            <div class="emotion-summary-icon" style="color: ${getEmotionColor(mostFrequentEmotion)}">
+                ${getEmotionIcon(mostFrequentEmotion)}
+            </div>
+            <div class="emotion-summary-label">最も多い感情</div>
+            <div class="emotion-summary-count">${getEmotionText(mostFrequentEmotion)}</div>
+        </div>
+        <div class="emotion-summary-item">
+            <div class="emotion-summary-icon" style="color: var(--primary-color)">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="emotion-summary-label">平均感情スコア</div>
+            <div class="emotion-summary-count">${averageScore.toFixed(1)}</div>
+        </div>
+        <div class="emotion-summary-item">
+            <div class="emotion-summary-icon" style="color: var(--primary-color)">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="emotion-summary-label">投稿日数</div>
+            <div class="emotion-summary-count">${uniqueDateCount}日</div>
+        </div>
+    `;
 }

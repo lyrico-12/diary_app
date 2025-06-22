@@ -438,26 +438,126 @@ body {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .calendar-day:hover {
     background-color: rgba(106, 90, 205, 0.1);
 }
 
-.calendar-day.has-diary {
-    background-color: var(--primary-light);
-    color: white;
-}
 
 .calendar-day.today {
     border: 2px solid var(--accent-color);
 }
 
+/* 感情に応じた背景色 */
+.calendar-day.emotion-very_unhappy {
+    background-color: #cec4d7; /* 薄い紫 */
+}
+
+.calendar-day.emotion-unhappy {
+    background-color: #cdd5ef; /* 薄い紫 */
+}
+
+.calendar-day.emotion-normal {
+    background-color: #e1f8ff; /* 薄い水色 */
+}
+
+.calendar-day.emotion-happy {
+    background-color: #fffad2; /* 薄い黄色 */
+}
+
+.calendar-day.emotion-very_happy {
+    background-color: #fdebd6; /* 薄いオレンジ色 */
+}
+
 .calendar-day-header {
     text-align: center;
     padding: 5px;
+}
+
+/* 月ごとのフィードバックセクション */
+.monthly-feedback-section {
+    margin-top: 20px;
+    text-align: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.monthly-feedback-section .feedback-container {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.monthly-feedback-section .btn-secondary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Klee One', sans-serif;
     font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.monthly-feedback-section .btn-secondary:hover {
+    background-color: var(--primary-dark);
+}
+
+/* 感情チャートセクション */
+.emotion-chart-section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.emotion-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.emotion-chart-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* 感情統計サマリー */
+.emotion-summary {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.emotion-summary-item {
+    text-align: center;
+}
+
+.emotion-summary-icon {
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.emotion-summary-label {
+    font-size: 0.8em;
     color: var(--text-light);
+    margin-bottom: 3px;
+}
+
+.emotion-summary-count {
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 /* 日記リスト */
@@ -465,6 +565,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
 }
 
 .diary-list-item {
@@ -474,6 +577,7 @@ body {
     box-shadow: var(--shadow);
     cursor: pointer;
     transition: transform 0.3s ease;
+    position: relative;
 }
 
 .diary-list-item:hover {
@@ -737,7 +841,27 @@ body {
 }
 
 .diary-meta {
-    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-light);
+    font-size: 0.9em;
+}
+
+.diary-meta-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.diary-emotion-large {
+    font-size: 3em;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 80px;
 }
 
 #detail-author {
@@ -832,22 +956,6 @@ body {
     font-style: italic;
     color: #666;
     margin-top: 10px;
-}
-
-/* 月ごとのフィードバックセクション */
-.monthly-feedback-section {
-    margin-top: 20px;
-    text-align: center;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 10px;
-    border: 1px solid #e9ecef;
-}
-
-.monthly-feedback-section .feedback-container {
-    margin-top: 15px;
-    background-color: #fff3cd; /* 明るい黄色系の背景色 */
-    border-left: 4px solid #ffc107; /* 黄色のアクセントボーダー */
 }
 
 /* レスポンシブデザイン */
@@ -994,12 +1102,24 @@ body {
     color: white;
 }
 
-.like-stat {
+.like-count {
+    font-weight: 600;
+}
+
+.diary-card {
+    position: relative;
+}
+
+.diary-list-item {
+    position: relative;
+}
+
+.emotion-stat {
     display: flex;
     align-items: center;
     gap: 5px;
 }
 
-.like-count {
-    font-weight: 600;
+.emotion-icon {
+    font-size: 1.2em;
 }

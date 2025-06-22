@@ -112,20 +112,31 @@
                         <div class="calendar-grid" id="calendar-grid">
                             <!-- カレンダーはJSで動的に生成 -->
                         </div>
-                        
-                        <!-- 月ごとのフィードバック機能 -->
-                        <div id="monthly-feedback-section" class="monthly-feedback-section">
-                            <div id="monthly-feedback-container" class="feedback-container hidden">
-                                <h4>今月の振り返り</h4>
-                                <p id="monthly-feedback-content"></p>
-                            </div>
-                            <button id="get-monthly-feedback-btn" class="btn btn-secondary">
-                                <i class="fas fa-calendar-alt"></i> 今月の振り返りをもらう
-                            </button>
-                            <p id="monthly-feedback-loading-state" class="feedback-loading hidden">
-                                月ごとフィードバックを生成中です...
-                            </p>
+                    </div>
+
+                    <!-- 感情分析サマリー -->
+                    <div class="emotion-chart-section">
+                        <div class="emotion-chart-header">
+                            <h3 class="emotion-chart-title">今月の感情の変化</h3>
                         </div>
+                        
+                        <div id="emotion-summary" class="emotion-summary">
+                            <!-- 感情統計サマリーはJSで動的に生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 月ごとのフィードバック機能 -->
+                    <div id="monthly-feedback-section" class="monthly-feedback-section">
+                        <div id="monthly-feedback-container" class="feedback-container hidden">
+                            <h4>今月の振り返り</h4>
+                            <p id="monthly-feedback-content"></p>
+                        </div>
+                        <button id="get-monthly-feedback-btn" class="btn btn-secondary">
+                            <i class="fas fa-calendar-alt"></i> 今月の振り返りをもらう
+                        </button>
+                        <p id="monthly-feedback-loading-state" class="feedback-loading hidden">
+                            月ごとフィードバックを生成中です...
+                        </p>
                     </div>
 
                     <div id="my-diary-list" class="diary-list">
@@ -220,8 +231,13 @@
                 <div class="diary-detail-header">
                     <button id="back-btn" class="btn small-btn"><i class="fas fa-arrow-left"></i> 戻る</button>
                     <div class="diary-meta">
-                        <span id="detail-author"></span>
-                        <span id="detail-date"></span>
+                        <div class="diary-meta-left">
+                            <span id="detail-author"></span>
+                            <span id="detail-date"></span>
+                        </div>
+                        <div id="detail-emotion-large" class="diary-emotion-large hidden">
+                            <!-- 大きな感情分析アイコンがここに表示される -->
+                        </div>
                     </div>
                 </div>
 
@@ -234,6 +250,9 @@
                     <div class="diary-stats">
                         <span class="diary-stat"><i class="fas fa-eye"></i> <span id="view-count">0</span>人が閲覧</span>
                         <span class="diary-stat"><i class="fas fa-heart"></i> <span id="like-count">0</span>いいね</span>
+                        <span id="detail-emotion" class="diary-stat emotion-stat hidden">
+                            <!-- 感情分析結果がここに表示される -->
+                        </span>
                     </div>
                     <div class="diary-rules-small">
                         <span class="rule-small">制限時間: <span id="detail-time-limit"></span></span>

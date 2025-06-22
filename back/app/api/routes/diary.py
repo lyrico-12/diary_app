@@ -4,7 +4,7 @@ from typing import List
 from ...core.database import get_db
 from ...core.security import get_current_user
 from ...models.user import User
-from ...schemas.diary import DiaryCreate, DiaryResponse, DiaryDetail, DiaryRules, DiaryLikeResponse
+from ...schemas.diary import DiaryCreate, DiaryResponse, DiaryDetail, DiaryRules, DiaryLikeResponse, OwnDiaryResponse
 from ...crud.diary import (
     get_diary, get_diary_by_user, get_user_diaries, get_public_diaries,
     get_friend_diaries, get_specific_friend_diaries, create_diary, increment_view_count, like_diary, unlike_diary, delete_diary
@@ -35,15 +35,15 @@ def get_random_rules(current_user: User = Depends(get_current_user)):
     """次の投稿時のランダム制限ルールを取得する"""
     return generate_random_rules()
 
-@router.get("/my", response_model=List[DiaryResponse])
+@router.get("/my", response_model=List[OwnDiaryResponse])
 def read_own_diaries(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """自分の全日記一覧を取得する"""
-    diaries = get_user_diaries(db, user_id=current_user.id, skip=skip, limit=limit)
+    """自分の全日記一覧を取得する（is_viewable関係なく全件）"""
+    diaries = crud_diary.get_user_diaries(db, user_id=current_user.id, skip=skip, limit=limit)
     return diaries
 
 @router.get("/public", response_model=List[DiaryResponse])
@@ -274,16 +274,24 @@ async def create_monthly_feedback(
     指定された年月の日記を全て取得し、月ごとのフィードバックを生成する。
     API呼び出しに時間がかかる可能性があるため、バックグラウンドタスクとして実行する。
     """
-    # 指定された年月の日記を取得
-    from datetime import datetime
-    start_date = datetime(year, month, 1)
+    # 指定された年月の日記を取得（日本時間で処理）
+    from datetime import datetime, timezone, timedelta
+    # 日本時間のタイムゾーンを定義
+    jst = timezone(timedelta(hours=9))
+    
+    # 指定された年月の開始日と終了日を日本時間で設定
+    start_date = datetime(year, month, 1, tzinfo=jst)
     if month == 12:
-        end_date = datetime(year + 1, 1, 1)
+        end_date = datetime(year + 1, 1, 1, tzinfo=jst)
     else:
-        end_date = datetime(year, month + 1, 1)
+        end_date = datetime(year, month + 1, 1, tzinfo=jst)
+    
+    # UTCに変換してデータベースクエリに使用
+    start_date_utc = start_date.astimezone(timezone.utc)
+    end_date_utc = end_date.astimezone(timezone.utc)
     
     # ユーザーの日記を取得
-    user_diaries = crud_diary.get_user_diaries_by_period(db, current_user.id, start_date, end_date)
+    user_diaries = crud_diary.get_user_diaries_by_period(db, current_user.id, start_date_utc, end_date_utc)
     
     if not user_diaries:
         raise HTTPException(status_code=404, detail="指定された月に日記が見つかりません")

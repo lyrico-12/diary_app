@@ -26,8 +26,24 @@ class DiaryResponse(DiaryBase):
     like_count: int
     time_limit_sec: int
     char_limit: int
+    emotion_analysis: Optional[str] = None  # 感情分析結果
     created_at: datetime
     is_viewable: bool
+    
+    class Config:
+        from_attributes = True
+
+class OwnDiaryResponse(DiaryBase):
+    id: int
+    user_id: int
+    user: Optional[UserInfo] = None
+    view_count: int
+    like_count: int
+    time_limit_sec: int
+    char_limit: int
+    emotion_analysis: Optional[str] = None  # 感情分析結果
+    created_at: datetime
+    # 自分の日記なのでis_viewableは不要
     
     class Config:
         from_attributes = True
