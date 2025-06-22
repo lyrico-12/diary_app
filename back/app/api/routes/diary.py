@@ -42,8 +42,8 @@ def read_own_diaries(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """自分の全日記一覧を取得する"""
-    diaries = get_user_diaries(db, user_id=current_user.id, skip=skip, limit=limit)
+    """自分の全日記一覧を取得する（is_viewable関係なく全件）"""
+    diaries = crud_diary.get_user_diaries(db, user_id=current_user.id, skip=skip, limit=limit)
     return diaries
 
 @router.get("/public", response_model=List[DiaryResponse])

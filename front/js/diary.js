@@ -205,7 +205,7 @@ function createDiaryListItem(diary) {
 }
 
 // カレンダーの日付セルを作成
-function createCalendarDay(date, hasDiary) {
+function createCalendarDay(date, hasDiary, diaryData = null) {
     const dayElement = document.createElement('div');
     dayElement.className = 'calendar-day';
     dayElement.setAttribute('data-date', date.toISOString().split('T')[0]);
@@ -216,23 +216,64 @@ function createCalendarDay(date, hasDiary) {
         dayElement.classList.add('today');
     }
     
-    // 日記がある場合のスタイル
-    if (hasDiary) {
+    // 日記がある場合の処理
+    if (hasDiary && diaryData) {
+        dayElement.classList.add('has-diary');
+        
+        // 感情分析に応じた背景色を適用
+        if (diaryData.emotion_analysis) {
+            const emotionClass = `emotion-${diaryData.emotion_analysis}`;
+            dayElement.classList.add(emotionClass);
+            console.log(`日付 ${date.toISOString().split('T')[0]} に感情クラス ${emotionClass} を適用`);
+        }
+        
+        // クリックイベント（日記詳細表示）
+        dayElement.addEventListener('click', () => {
+            viewDiaryDetail(diaryData.id);
+        });
+    } else if (hasDiary) {
+        // 日記データがない場合（前月・翌月の日付など）
         dayElement.classList.add('has-diary');
     }
     
     // 日付を表示
     dayElement.textContent = date.getDate();
     
-    // クリックイベント
-    dayElement.addEventListener('click', () => {
-        if (hasDiary) {
-            // 日記がある場合の処理（必要に応じて実装）
-            console.log('日記がある日がクリックされました:', date.toISOString().split('T')[0]);
+    return dayElement;
+}
+
+// その日の日記の感情分析サマリーを計算
+function calculateDayEmotionSummary(dayDiaries) {
+    if (!dayDiaries || dayDiaries.length === 0) return null;
+    
+    console.log('その日の日記数:', dayDiaries.length);
+    
+    // 感情の統計を計算
+    const emotionStats = {
+        'very_happy': 0,
+        'happy': 0,
+        'normal': 0,
+        'unhappy': 0,
+        'very_unhappy': 0
+    };
+    
+    dayDiaries.forEach(diary => {
+        console.log('日記の感情分析:', diary.emotion_analysis);
+        if (diary.emotion_analysis && emotionStats.hasOwnProperty(diary.emotion_analysis)) {
+            emotionStats[diary.emotion_analysis]++;
         }
     });
     
-    return dayElement;
+    console.log('感情統計:', emotionStats);
+    
+    // 最も多い感情を特定
+    const mostFrequentEmotion = Object.entries(emotionStats).reduce((a, b) => 
+        emotionStats[a[0]] > emotionStats[b[0]] ? a : b
+    )[0];
+    
+    console.log('最も多い感情:', mostFrequentEmotion);
+    
+    return mostFrequentEmotion;
 }
 
 // カレンダーを生成
@@ -241,6 +282,10 @@ function generateCalendar(year, month, diaries) {
     const calendarTitle = document.getElementById('calendar-title');
     
     if (!calendarGrid || !calendarTitle) return;
+    
+    console.log('カレンダー生成開始:', year, month);
+    console.log('日記データ数:', diaries.length);
+    console.log('日記データ:', diaries);
     
     // タイトルを更新
     calendarTitle.textContent = `${year}年${month}月`;
@@ -275,13 +320,24 @@ function generateCalendar(year, month, diaries) {
         const date = new Date(year, month - 1, day);
         const dateString = date.toISOString().split('T')[0];
         
-        // その日の日記を探す
-        const dayDiary = diaries.find(diary => {
+        // その日の全ての日記を探す
+        const dayDiaries = diaries.filter(diary => {
             const diaryDate = new Date(diary.created_at);
             return diaryDate.toISOString().split('T')[0] === dateString;
         });
         
-        const dayElement = createCalendarDay(date, !!dayDiary);
+        console.log(`日付 ${dateString} の日記数:`, dayDiaries.length);
+        
+        // その日の感情分析サマリーを計算
+        const dayEmotionSummary = calculateDayEmotionSummary(dayDiaries);
+        
+        // 日記データオブジェクトを作成（感情分析サマリーを含む）
+        const dayDiaryData = dayDiaries.length > 0 ? {
+            ...dayDiaries[0], // 最初の日記の基本情報を使用
+            emotion_analysis: dayEmotionSummary // サマリー感情分析を使用
+        } : null;
+        
+        const dayElement = createCalendarDay(date, dayDiaries.length > 0, dayDiaryData);
         calendarGrid.appendChild(dayElement);
     }
     
@@ -293,6 +349,8 @@ function generateCalendar(year, month, diaries) {
         dayElement.style.opacity = '0.3';
         calendarGrid.appendChild(dayElement);
     }
+    
+    console.log('カレンダー生成完了');
 }
 
 // 日記詳細の表示
@@ -1178,6 +1236,15 @@ function generateEmotionSummary(diaries) {
     }, 0);
     const averageScore = diaries.length > 0 ? totalScore / diaries.length : 3;
     
+    // ユニークな投稿日数を計算
+    const uniqueDates = new Set();
+    diaries.forEach(diary => {
+        const diaryDate = new Date(diary.created_at);
+        const dateString = diaryDate.toISOString().split('T')[0];
+        uniqueDates.add(dateString);
+    });
+    const uniqueDateCount = uniqueDates.size;
+    
     // サマリーを生成
     summaryContainer.innerHTML = `
         <div class="emotion-summary-item">
@@ -1199,7 +1266,7 @@ function generateEmotionSummary(diaries) {
                 <i class="fas fa-calendar-check"></i>
             </div>
             <div class="emotion-summary-label">投稿日数</div>
-            <div class="emotion-summary-count">${diaries.length}日</div>
+            <div class="emotion-summary-count">${uniqueDateCount}日</div>
         </div>
     `;
 }

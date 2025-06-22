@@ -454,6 +454,32 @@ body {
     border: 2px solid var(--accent-color);
 }
 
+/* 感情に応じた背景色 - has-diaryよりも後に配置して優先度を高くする */
+.calendar-day.has-diary.emotion-very-unhappy {
+    background-color: #8B5CF6 !important; /* 紫 */
+    color: white !important;
+}
+
+.calendar-day.has-diary.emotion-unhappy {
+    background-color: #3B82F6 !important; /* 藍色 */
+    color: white !important;
+}
+
+.calendar-day.has-diary.emotion-normal {
+    background-color: #60A5FA !important; /* 水色 */
+    color: white !important;
+}
+
+.calendar-day.has-diary.emotion-happy {
+    background-color: #FCD34D !important; /* 黄色 */
+    color: #333 !important;
+}
+
+.calendar-day.has-diary.emotion-very-happy {
+    background-color: #FB923C !important; /* オレンジ色 */
+    color: white !important;
+}
+
 .calendar-day-header {
     text-align: center;
     padding: 5px;
