@@ -139,7 +139,12 @@ function createDiaryCard(diary) {
         <div class="diary-footer">
             <div class="diary-stats">
                 <span><i class="fas fa-eye"></i> ${diary.view_count}</span>
-                <span><i class="fas fa-heart"></i> ${diary.like_count}</span>
+                <span class="like-stat"><i class="fas fa-heart"></i> <span class="like-count">${diary.like_count}</span></span>
+            </div>
+            <div class="diary-actions">
+                <button class="like-btn-card" data-id="${diary.id}">
+                    <i class="far fa-heart"></i> いいね
+                </button>
             </div>
             <div class="diary-rules-mini">
                 <span>制限時間: ${formatTime(diary.time_limit_sec)}</span>
@@ -149,9 +154,22 @@ function createDiaryCard(diary) {
     
     card.innerHTML += cardContent;
     
-    // クリックイベント
-    card.addEventListener('click', () => {
-        viewDiaryDetail(diary.id);
+    // いいねボタンのイベントリスナーを追加
+    const likeBtn = card.querySelector('.like-btn-card');
+    likeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // カードのクリックイベントを防ぐ
+        toggleLikeFromCard(diary.id, likeBtn, card.querySelector('.like-count'));
+    });
+    
+    // いいね状態を確認して表示を更新
+    checkAndUpdateLikeStatus(diary.id, likeBtn);
+    
+    // カードのクリックイベント（いいねボタン以外の部分）
+    card.addEventListener('click', (e) => {
+        // いいねボタンがクリックされた場合は詳細画面に移動しない
+        if (!e.target.closest('.like-btn-card')) {
+            viewDiaryDetail(diary.id);
+        }
     });
     
     return card;
@@ -292,6 +310,10 @@ async function viewDiaryDetail(diaryId) {
         // フィードバックセクションの初期化
         initFeedbackSection(diaryId, diary.user_id);
         
+        // いいね状態を確認して表示を更新
+        const detailLikeBtn = document.getElementById('like-btn');
+        await checkAndUpdateLikeStatus(diaryId, detailLikeBtn);
+        
         // 閲覧記録を残す（自分の日記でない場合）
         if (diary.user_id !== currentUser.id) {
             await fetch(`${API_BASE_URL}/diary/${diaryId}/view`, {
@@ -348,10 +370,16 @@ async function fetchAndDisplayFeedback(diaryId) {
             if (feedback && feedback.content) {
                 displayFeedback(feedback.content);
             }
-        } 
+        } else if (response.status === 404) {
+            // フィードバックが存在しない場合は静かに処理（エラーログを出力しない）
+            return;
+        } else {
+            // その他のエラーの場合のみログを出力
+            console.error('Error fetching feedback:', response.status, response.statusText);
+        }
     } catch (error) {
-        // 既存フィードバックがない場合はボタンが表示されたままになるので、ここではエラーログのみ
-        console.error('Error fetching existing feedback:', error);
+        // ネットワークエラーなどの場合のみログを出力
+        console.error('Network error fetching feedback:', error);
     }
 }
 
@@ -410,9 +438,15 @@ function pollForFeedback(diaryId) {
                     document.getElementById('feedback-loading-state').classList.add('hidden');
                     return;
                 }
+            } else if (response.status === 404) {
+                // フィードバックがまだ生成されていない場合は静かに処理（エラーログを出力しない）
+                return;
+            } else {
+                // その他のエラーの場合のみログを出力
+                console.error('Polling error:', response.status, response.statusText);
             }
         } catch (error) {
-            console.error('Polling error:', error);
+            console.error('Network error during polling:', error);
         }
 
         if (attempts >= maxAttempts) {
@@ -489,9 +523,15 @@ function pollForMonthlyFeedback(year, month) {
                     document.getElementById('monthly-feedback-loading-state').classList.add('hidden');
                     return;
                 }
+            } else if (response.status === 404) {
+                // 月ごとフィードバックがまだ生成されていない場合は静かに処理（エラーログを出力しない）
+                return;
+            } else {
+                // その他のエラーの場合のみログを出力
+                console.error('Monthly feedback polling error:', response.status, response.statusText);
             }
         } catch (error) {
-            console.error('Monthly feedback polling error:', error);
+            console.error('Network error during monthly feedback polling:', error);
         }
 
         if (attempts >= maxAttempts) {
@@ -527,10 +567,16 @@ async function fetchAndDisplayMonthlyFeedback(year, month) {
             if (feedback && feedback.content) {
                 displayMonthlyFeedback(feedback.content);
             }
-        } 
+        } else if (response.status === 404) {
+            // 月ごとフィードバックが存在しない場合は静かに処理（エラーログを出力しない）
+            return;
+        } else {
+            // その他のエラーの場合のみログを出力
+            console.error('Error fetching monthly feedback:', response.status, response.statusText);
+        }
     } catch (error) {
-        // 既存フィードバックがない場合はボタンが表示されたままになるので、ここではエラーログのみ
-        console.error('Error fetching existing monthly feedback:', error);
+        // ネットワークエラーなどの場合のみログを出力
+        console.error('Network error fetching monthly feedback:', error);
     }
 }
 
@@ -728,15 +774,138 @@ async function submitDiary() {
     }
 }
 
-// いいね機能
-async function toggleLike(diaryId) {
+// いいね機能（カードから呼び出し）
+async function toggleLikeFromCard(diaryId, likeBtn, likeCountElement) {
     try {
-        const response = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
-            method: 'POST',
+        // 現在のいいね状態を確認
+        const checkResponse = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
+        
+        if (!checkResponse.ok) {
+            throw new Error('いいね状態の確認に失敗しました');
+        }
+        
+        const { is_liked } = await checkResponse.json();
+        
+        let response;
+        if (is_liked) {
+            // いいねを取り消す
+            response = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+        } else {
+            // いいねを付ける
+            response = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+        }
+        
+        if (!response.ok) {
+            throw new Error('いいねの処理に失敗しました');
+        }
+        
+        // いいねカウントを更新
+        const currentCount = parseInt(likeCountElement.textContent);
+        if (is_liked) {
+            // いいねを取り消した場合
+            likeCountElement.textContent = Math.max(0, currentCount - 1);
+            likeBtn.innerHTML = '<i class="far fa-heart"></i> いいね';
+            likeBtn.classList.remove('active');
+        } else {
+            // いいねを付けた場合
+            likeCountElement.textContent = currentCount + 1;
+            likeBtn.innerHTML = '<i class="fas fa-heart"></i> いいね済み';
+            likeBtn.classList.add('active');
+        }
+        
+        // 詳細画面の対応するボタンも更新
+        const detailLikeBtn = document.getElementById('like-btn');
+        if (detailLikeBtn && detailLikeBtn.getAttribute('data-id') === diaryId.toString()) {
+            const detailLikeCount = document.getElementById('like-count');
+            if (detailLikeCount) {
+                detailLikeCount.textContent = likeCountElement.textContent;
+            }
+            if (is_liked) {
+                detailLikeBtn.innerHTML = '<i class="far fa-heart"></i> いいね';
+                detailLikeBtn.classList.remove('active');
+            } else {
+                detailLikeBtn.innerHTML = '<i class="fas fa-heart"></i> いいね済み';
+                detailLikeBtn.classList.add('active');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error toggling like:', error);
+    }
+}
+
+// いいね状態を確認して表示を更新
+async function checkAndUpdateLikeStatus(diaryId, likeBtn) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const { is_liked } = await response.json();
+            if (is_liked) {
+                likeBtn.innerHTML = '<i class="fas fa-heart"></i> いいね済み';
+                likeBtn.classList.add('active');
+            } else {
+                likeBtn.innerHTML = '<i class="far fa-heart"></i> いいね';
+                likeBtn.classList.remove('active');
+            }
+        }
+    } catch (error) {
+        console.error('Error checking like status:', error);
+    }
+}
+
+// いいね機能（詳細画面から呼び出し）
+async function toggleLike(diaryId) {
+    try {
+        // 現在のいいね状態を確認
+        const checkResponse = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (!checkResponse.ok) {
+            throw new Error('いいね状態の確認に失敗しました');
+        }
+        
+        const { is_liked } = await checkResponse.json();
+        
+        let response;
+        if (is_liked) {
+            // いいねを取り消す
+            response = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+        } else {
+            // いいねを付ける
+            response = await fetch(`${API_BASE_URL}/diary/${diaryId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+        }
         
         if (!response.ok) {
             throw new Error('いいねの処理に失敗しました');
@@ -745,13 +914,39 @@ async function toggleLike(diaryId) {
         // いいねカウントを更新
         const likeCount = document.getElementById('like-count');
         const currentCount = parseInt(likeCount.textContent);
-        likeCount.textContent = currentCount + 1;
+        if (is_liked) {
+            // いいねを取り消した場合
+            likeCount.textContent = Math.max(0, currentCount - 1);
+        } else {
+            // いいねを付けた場合
+            likeCount.textContent = currentCount + 1;
+        }
         
         // いいねボタンの見た目を変更
         const likeBtn = document.getElementById('like-btn');
-        likeBtn.innerHTML = '<i class="fas fa-heart"></i> いいね済み';
-        likeBtn.classList.add('active');
-        likeBtn.disabled = true;
+        if (is_liked) {
+            likeBtn.innerHTML = '<i class="far fa-heart"></i> いいね';
+            likeBtn.classList.remove('active');
+        } else {
+            likeBtn.innerHTML = '<i class="fas fa-heart"></i> いいね済み';
+            likeBtn.classList.add('active');
+        }
+        
+        // フィード画面の対応するカードも更新
+        const cardLikeBtn = document.querySelector(`.like-btn-card[data-id="${diaryId}"]`);
+        if (cardLikeBtn) {
+            const cardLikeCount = cardLikeBtn.closest('.diary-card').querySelector('.like-count');
+            if (cardLikeCount) {
+                cardLikeCount.textContent = likeCount.textContent;
+            }
+            if (is_liked) {
+                cardLikeBtn.innerHTML = '<i class="far fa-heart"></i> いいね';
+                cardLikeBtn.classList.remove('active');
+            } else {
+                cardLikeBtn.innerHTML = '<i class="fas fa-heart"></i> いいね済み';
+                cardLikeBtn.classList.add('active');
+            }
+        }
         
     } catch (error) {
         console.error('Error toggling like:', error);
