@@ -910,9 +910,6 @@ body {
         display: none;
     }
 
-
-
-
     .nav-link {
         margin: 0 5px;
         padding: 5px;
@@ -974,4 +971,35 @@ body {
 
 .floating-add-btn:active {
     transform: translateX(-50%) scale(0.95);
+}
+
+.like-btn-card {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.like-btn-card:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.like-btn-card.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.like-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.like-count {
+    font-weight: 600;
 }

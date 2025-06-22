@@ -204,3 +204,11 @@ def get_user_diaries_by_period(db: Session, user_id: int, start_date: datetime, 
         Diary.created_at >= start_date,
         Diary.created_at < end_date
     ).order_by(Diary.created_at.asc()).all()
+
+def check_user_liked_diary(db: Session, diary_id: int, user_id: int):
+    """ユーザーが特定の日記にいいねしているかどうかを確認する"""
+    like = db.query(DiaryLike).filter(
+        DiaryLike.diary_id == diary_id,
+        DiaryLike.user_id == user_id
+    ).first()
+    return like is not None

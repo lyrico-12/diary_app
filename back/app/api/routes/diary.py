@@ -192,6 +192,17 @@ def unlike_diary_endpoint(
     if not result:
         raise HTTPException(status_code=404, detail="いいねが見つかりません")
 
+@router.get("/{diary_id}/like", summary="いいね状態を確認")
+def check_like_status(
+    diary_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """日記のいいね状態を確認する"""
+    from ...crud.diary import check_user_liked_diary
+    is_liked = check_user_liked_diary(db, diary_id, current_user.id)
+    return {"is_liked": is_liked}
+
 @router.delete("/{diary_id}", status_code=204)
 def delete_diary_endpoint(
     diary_id: int,
