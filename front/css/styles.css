@@ -474,6 +474,7 @@ body {
     box-shadow: var(--shadow);
     cursor: pointer;
     transition: transform 0.3s ease;
+    position: relative;
 }
 
 .diary-list-item:hover {
@@ -994,34 +995,15 @@ body {
     color: white;
 }
 
-.like-stat {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
 .like-count {
     font-weight: 600;
 }
 
-/* 感情分析結果表示 */
-.emotion-indicator {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 1.5em;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    cursor: help;
+.diary-card {
+    position: relative;
 }
 
-.diary-card {
+.diary-list-item {
     position: relative;
 }
 
@@ -1033,9 +1015,4 @@ body {
 
 .emotion-icon {
     font-size: 1.2em;
-}
-
-.emotion-text {
-    font-size: 0.9em;
-    color: var(--text-light);
 }

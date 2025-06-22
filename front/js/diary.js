@@ -150,7 +150,6 @@ function createDiaryCard(diary) {
                 <span>制限時間: ${formatTime(diary.time_limit_sec)}</span>
             </div>
         </div>
-        ${diary.emotion_analysis ? `<div class="emotion-indicator" title="${getEmotionText(diary.emotion_analysis)}">${getEmotionIcon(diary.emotion_analysis)}</div>` : ''}
     `;
     
     card.innerHTML += cardContent;
@@ -190,8 +189,8 @@ function createDiaryListItem(diary) {
             <div class="diary-stats">
                 <span><i class="fas fa-eye"></i> ${diary.view_count}</span>
                 <span><i class="fas fa-heart"></i> ${diary.like_count}</span>
+                ${diary.emotion_analysis ? `<span class="emotion-stat"><span class="emotion-icon">${getEmotionIcon(diary.emotion_analysis)}</span></span>` : ''}
             </div>
-            ${diary.emotion_analysis ? `<div class="emotion-indicator" title="${getEmotionText(diary.emotion_analysis)}">${getEmotionIcon(diary.emotion_analysis)}</div>` : ''}
         </div>
     `;
     
@@ -305,7 +304,6 @@ async function viewDiaryDetail(diaryId) {
         if (diary.emotion_analysis && emotionElement) {
             emotionElement.innerHTML = `
                 <span class="emotion-icon">${getEmotionIcon(diary.emotion_analysis)}</span>
-                <span class="emotion-text">${getEmotionText(diary.emotion_analysis)}</span>
             `;
             emotionElement.classList.remove('hidden');
         } else if (emotionElement) {
