@@ -84,8 +84,7 @@ async function loadMyDiaries() {
             currentMonthDiaries
         );
         
-        // 感情チャートを生成
-        generateEmotionChart(currentMonthDiaries);
+        // 感情サマリーを生成
         generateEmotionSummary(currentMonthDiaries);
         
         // 日記リストを更新
@@ -870,12 +869,6 @@ function setupDiaryListeners() {
         const month = parseInt(document.getElementById('get-monthly-feedback-btn').getAttribute('data-month'));
         requestMonthlyFeedback(year, month);
     });
-    
-    // 感情チャートトグルボタン
-    const emotionChartToggle = document.getElementById('emotion-chart-toggle');
-    if (emotionChartToggle) {
-        emotionChartToggle.addEventListener('click', toggleEmotionChart);
-    }
 }
 
 // いいね機能（カードから呼び出し）
@@ -1170,81 +1163,7 @@ function createCalendarDay(date, hasDiary, diaryData = null) {
     return dayElement;
 }
 
-// 感情チャートを生成
-function generateEmotionChart(diaries) {
-    const chartContainer = document.getElementById('emotion-chart');
-    const legendContainer = document.getElementById('emotion-legend');
-    
-    if (!chartContainer || !legendContainer) return;
-    
-    // 感情の統計を計算
-    const emotionStats = {
-        'very_happy': 0,
-        'happy': 0,
-        'normal': 0,
-        'unhappy': 0,
-        'very_unhappy': 0
-    };
-    
-    diaries.forEach(diary => {
-        if (diary.emotion_analysis && emotionStats.hasOwnProperty(diary.emotion_analysis)) {
-            emotionStats[diary.emotion_analysis]++;
-        }
-    });
-    
-    // 最大値を計算
-    const maxCount = Math.max(...Object.values(emotionStats));
-    
-    // チャートをクリア
-    chartContainer.innerHTML = '';
-    
-    // 感情バーを生成
-    Object.entries(emotionStats).forEach(([emotion, count]) => {
-        const barContainer = document.createElement('div');
-        barContainer.style.display = 'flex';
-        barContainer.style.flexDirection = 'column';
-        barContainer.style.alignItems = 'center';
-        barContainer.style.flex = '1';
-        
-        const bar = document.createElement('div');
-        bar.className = 'emotion-bar';
-        bar.style.backgroundColor = getEmotionColor(emotion);
-        bar.style.height = maxCount > 0 ? `${(count / maxCount) * 100}%` : '0%';
-        bar.style.minHeight = '10px';
-        bar.title = `${getEmotionText(emotion)}: ${count}件`;
-        
-        const label = document.createElement('div');
-        label.className = 'emotion-bar-label';
-        label.textContent = count;
-        
-        barContainer.appendChild(bar);
-        barContainer.appendChild(label);
-        chartContainer.appendChild(barContainer);
-    });
-    
-    // 凡例を生成
-    legendContainer.innerHTML = '';
-    Object.entries(emotionStats).forEach(([emotion, count]) => {
-        if (count > 0) {
-            const legendItem = document.createElement('div');
-            legendItem.className = 'emotion-legend-item';
-            
-            const icon = document.createElement('span');
-            icon.className = 'emotion-legend-icon';
-            icon.textContent = getEmotionIcon(emotion);
-            icon.style.color = getEmotionColor(emotion);
-            
-            const text = document.createElement('span');
-            text.textContent = `${getEmotionText(emotion)} (${count})`;
-            
-            legendItem.appendChild(icon);
-            legendItem.appendChild(text);
-            legendContainer.appendChild(legendItem);
-        }
-    });
-}
-
-// 感情統計サマリーを生成
+// 感情サマリーを生成
 function generateEmotionSummary(diaries) {
     const summaryContainer = document.getElementById('emotion-summary');
     if (!summaryContainer) return;
@@ -1299,20 +1218,6 @@ function generateEmotionSummary(diaries) {
             <div class="emotion-summary-count">${diaries.length}日</div>
         </div>
     `;
-}
-
-// 感情チャートの表示/非表示を切り替え
-function toggleEmotionChart() {
-    const container = document.getElementById('emotion-chart-container');
-    const toggleBtn = document.getElementById('emotion-chart-toggle');
-    
-    if (container.classList.contains('active')) {
-        container.classList.remove('active');
-        toggleBtn.innerHTML = '<i class="fas fa-chart-bar"></i> チャート表示';
-    } else {
-        container.classList.add('active');
-        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> チャート非表示';
-    }
 }
 
 // カレンダーを生成（感情アイコン付き）
