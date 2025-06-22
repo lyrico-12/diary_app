@@ -90,7 +90,7 @@
                         <!-- 日記カードはJSで動的に生成 -->
                         <p class="empty-state">まだ表示できる日記がありません。<br>フレンドを追加するか、自分で投稿してみましょう！</p>
                     </div>
-                    
+
                     <!-- 新しい日記ボタン（画面中央下） -->
                     <button id="new-diary-btn" class="floating-add-btn">
                         <i class="fas fa-plus"></i>
@@ -112,7 +112,7 @@
                         <div class="calendar-grid" id="calendar-grid">
                             <!-- カレンダーはJSで動的に生成 -->
                         </div>
-                        
+
                         <!-- 月ごとのフィードバック機能 -->
                         <div id="monthly-feedback-section" class="monthly-feedback-section">
                             <div id="monthly-feedback-container" class="feedback-container hidden">
@@ -130,7 +130,7 @@
 
                     <div id="my-diary-list" class="diary-list">
                         <!-- 日記リストはJSで動的に生成 -->
-                        <p class="empty-state">まだ日記を書いていません。<br>右上の「新しい日記」ボタンから投稿してみましょう！</p>
+                        <p class="empty-state">まだ日記を書いていません。<br>ホームに移動して日記を投稿してみましょう！</p>
                     </div>
                 </div>
 
@@ -240,7 +240,8 @@
                         <span class="rule-small">文字数制限: <span id="detail-char-limit"></span></span>
                     </div>
                     <div class="diary-actions">
-                        <button id="delete-diary-btn" class="btn danger-btn hidden"><i class="fas fa-trash"></i></button>
+                        <button id="delete-diary-btn" class="btn danger-btn hidden"><i
+                                class="fas fa-trash"></i></button>
                         <button id="like-btn" class="btn like-btn"><i class="far fa-heart"></i> いいね</button>
                     </div>
                 </div>
