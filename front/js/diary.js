@@ -602,6 +602,47 @@ async function initMonthlyFeedbackSection() {
         monthlyFeedbackBtn.setAttribute('data-month', month);
     }
     
+    // 現在の月の日記データを取得して、日記がない場合は「データなし」を表示
+    try {
+        const diariesResponse = await fetch(`${API_BASE_URL}/diary/my`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (diariesResponse.ok) {
+            const allDiaries = await diariesResponse.json();
+            
+            // 現在の月の日記をフィルタ（日本時間で処理）
+            const currentMonthDiaries = allDiaries.filter(diary => {
+                const diaryDate = new Date(diary.created_at);
+                // 日本時間に変換（UTC+9時間）
+                const jstDate = new Date(diaryDate.getTime() + (9 * 60 * 60 * 1000));
+                return jstDate.getFullYear() === year && jstDate.getMonth() === month - 1;
+            });
+            
+            // 日記がない場合は「データなし」を表示
+            if (currentMonthDiaries.length === 0) {
+                const container = document.getElementById('monthly-feedback-container');
+                const contentElement = document.getElementById('monthly-feedback-content');
+                
+                if (container && contentElement) {
+                    contentElement.innerHTML = `
+                        <div style="text-align: center; color: var(--text-light); padding: 20px;">
+                            <i class="fas fa-calendar-times" style="font-size: 2em; margin-bottom: 10px;"></i>
+                            <p>この月のデータがありません</p>
+                        </div>
+                    `;
+                    container.classList.remove('hidden');
+                    document.getElementById('get-monthly-feedback-btn').classList.add('hidden');
+                }
+                return;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking monthly diaries:', error);
+    }
+    
     // 既存の月ごとフィードバックがあれば表示
     try {
         const response = await fetch(`${API_BASE_URL}/diary/monthly-feedback/${year}/${month}`, {
@@ -1254,6 +1295,20 @@ function getEmotionScore(emotion) {
 function generateEmotionSummary(diaries) {
     const summaryContainer = document.getElementById('emotion-summary');
     if (!summaryContainer) return;
+    
+    // 日記がない場合は「データなし」を表示
+    if (!diaries || diaries.length === 0) {
+        summaryContainer.innerHTML = `
+            <div class="emotion-summary-item" style="grid-column: 1 / -1; text-align: center;">
+                <div class="emotion-summary-icon" style="color: var(--text-light)">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <div class="emotion-summary-label">この月のデータ</div>
+                <div class="emotion-summary-count">データなし</div>
+            </div>
+        `;
+        return;
+    }
     
     // 感情の統計を計算
     const emotionStats = {
