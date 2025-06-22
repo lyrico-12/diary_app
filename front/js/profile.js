@@ -152,41 +152,129 @@ async function updateProfileImage(imageUrl) {
     try {
         console.log('Updating profile image...', { imageUrl: imageUrl.substring(0, 50) + '...' });
         
-        const response = await fetch(`${API_BASE_URL}/users/me/profile-image`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                profile_image_url: imageUrl
-            })
-        });
-
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(`プロフィール画像の更新に失敗しました (${response.status}): ${errorText}`);
-        }
-
-        const updatedUser = await response.json();
-        console.log('Updated user:', updatedUser);
-        
-        // 現在のユーザー情報を更新
-        currentUser.profile_image_url = updatedUser.profile_image_url;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
-        // 画面の表示を更新
-        displayCurrentProfileImage();
-        updateNavProfileImage();
+        // 統一的なユーザー更新APIを使用
+        await updateUser({
+            profile_image_url: imageUrl
+        })
         
         alert('プロフィール画像を更新しました！');
         
     } catch (error) {
         console.error('Error updating profile image:', error);
         alert('プロフィール画像の更新に失敗しました: ' + error.message);
+    }
+}
+
+// プロフィール情報の表示
+function displayProfileInfo() {
+    if (currentUser) {
+        document.getElementById('profile-username').value = currentUser.username || '';
+        document.getElementById('profile-email').value = currentUser.email || '';
+    }
+}
+
+// プロフィール情報の更新
+async function updateProfileInfo() {
+    try {
+        const username = document.getElementById('profile-username').value.trim();
+        const email = document.getElementById('profile-email').value.trim();
+        
+        if (!username) {
+            alert('ユーザー名を入力してください');
+            return;
+        }
+        
+        if (!email) {
+            alert('メールアドレスを入力してください');
+            return;
+        }
+        
+        await updateUser({
+            username: username,
+            email: email
+        });
+        
+        // ナビゲーションバーのユーザー名も更新
+        document.getElementById('user-name').textContent = username;
+        
+        alert('プロフィール情報を更新しました！');
+        
+    } catch (error) {
+        console.error('Error updating profile info:', error);
+        alert('プロフィール情報の更新に失敗しました: ' + error.message);
+    }
+}
+
+// パスワードの変更
+async function updatePassword() {
+    try {
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        
+        if (!newPassword) {
+            alert('新しいパスワードを入力してください');
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            alert('パスワードは6文字以上にしてください');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            alert('パスワードが一致しません');
+            return;
+        }
+        
+        await updateUser({
+            password: newPassword
+        });
+        
+        // パスワードフィールドをクリア
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+        
+        alert('パスワードを変更しました！');
+        
+    } catch (error) {
+        console.error('Error updating password:', error);
+        alert('パスワードの変更に失敗しました: ' + error.message);
+    }
+}
+
+// 統一的なユーザー情報更新関数
+async function updateUser(updateData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`ユーザー情報の更新に失敗しました (${response.status}): ${errorText}`);
+        }
+
+        const updatedUser = await response.json();
+        console.log('Updated user:', updatedUser);
+        
+        // 現在のユーザー情報を更新
+        Object.assign(currentUser, updatedUser);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        // 画面の表示を更新
+        // refreshAllProfileImages();
+        
+        return updatedUser;
+        
+    } catch (error) {
+        console.error('Error updating user:', error);
+        throw error;
     }
 }
 
@@ -226,6 +314,12 @@ function setupProfileListeners() {
     document.getElementById('crop-cancel-btn').addEventListener('click', closeCropModal);
     document.getElementById('crop-apply-btn').addEventListener('click', applyCrop);
     
+    // プロフィール情報更新ボタン
+    document.getElementById('update-profile-btn').addEventListener('click', updateProfileInfo);
+    
+    // パスワード変更ボタン
+    document.getElementById('update-password-btn').addEventListener('click', updatePassword);
+    
     // モーダル背景クリックで閉じる
     document.getElementById('crop-modal').addEventListener('click', (e) => {
         if (e.target.id === 'crop-modal') {
@@ -236,5 +330,14 @@ function setupProfileListeners() {
 
 // プロフィール画面の初期化
 function initializeProfileScreen() {
-    displayCurrentProfileImage();
+    // プロフィール画面表示時に最新のユーザー情報を取得
+    if (typeof fetchUserInfo === 'function') {
+        fetchUserInfo().then(() => {
+            displayCurrentProfileImage();
+            displayProfileInfo();
+        });
+    } else {
+        displayCurrentProfileImage();
+        displayProfileInfo();
+    }
 }

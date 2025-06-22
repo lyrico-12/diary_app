@@ -108,6 +108,38 @@ body {
     font-size: 1em;
 }
 
+/* プロフィール設定フォーム */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-input:invalid {
+    border-color: var(--error-color);
+}
+
 /* エラーメッセージ */
 .error-message {
     color: var(--error-color);
@@ -1151,4 +1183,41 @@ body {
 
 .profile-image-upload-btn:hover {
     background-color: var(--primary-dark);
+}
+
+/* プロフィール設定フォーム */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-input:invalid {
+    border-color: var(--error-color);
+}
+
+/* プロフィール設定セクション間の余白 */
+.profile-settings + .profile-settings {
+    margin-top: 30px;
 }

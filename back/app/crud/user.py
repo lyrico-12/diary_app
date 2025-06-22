@@ -85,6 +85,8 @@ def update_user(db: Session, db_user: User, user_update):
         db_user.email = user_update.email
     if user_update.password is not None:
         db_user.hashed_password = get_password_hash(user_update.password)
+    if user_update.profile_image_url is not None:
+        db_user.profile_image_url = user_update.profile_image_url
     
     db.commit()
     db.refresh(db_user)
