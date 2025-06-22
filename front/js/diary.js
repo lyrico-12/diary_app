@@ -202,69 +202,301 @@ function createDiaryListItem(diary) {
     return listItem;
 }
 
-// カレンダーの更新Add commentMore actions
+// カレンダーの更新
 function updateCalendar(diaries) {
     const calendarGrid = document.getElementById('calendar-grid');
-    const currentMonth = currentCalendarDate.getMonth();
-    const currentYear = currentCalendarDate.getFullYear();
-    const now = new Date();
+    const calendarTitle = document.getElementById('calendar-title');
     
-    // カレンダーのタイトル更新
-    document.getElementById('calendar-title').textContent = `${currentYear}年${currentMonth + 1}月`;
+    // 現在の年月を取得
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    
+    // カレンダータイトルを更新
+    calendarTitle.textContent = `${year}年${month + 1}月`;
+    
+    // 月の最初の日と最後の日を取得
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
     
     // カレンダーグリッドをクリア
     calendarGrid.innerHTML = '';
     
     // 曜日ヘッダーを追加
-    const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
-    daysOfWeek.forEach(day => {
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    weekdays.forEach(day => {
         const dayHeader = document.createElement('div');
         dayHeader.className = 'calendar-day-header';
         dayHeader.textContent = day;
         calendarGrid.appendChild(dayHeader);
     });
     
-    // 月の最初の日の曜日を取得
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    // 日付を生成
+    const currentDate = new Date(startDate);
+    const endDate = new Date(lastDay);
+    endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
     
-    // 月の日数を取得
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    while (currentDate <= endDate) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        
+        // 今日の日付かどうかをチェック
+        const today = new Date();
+        if (currentDate.toDateString() === today.toDateString()) {
+            dayElement.classList.add('today');
+        }
+        
+        // その日の日記があるかどうかをチェック
+        const dayString = currentDate.toISOString().split('T')[0];
+        const dayDiaries = diaries.filter(diary => {
+            const diaryDate = new Date(diary.created_at);
+            return diaryDate.toDateString() === currentDate.toDateString();
+        });
+        
+        if (dayDiaries.length > 0) {
+            dayElement.classList.add('has-diary');
+            
+            // 感情アイコンを追加
+            const emotionIcon = document.createElement('div');
+            emotionIcon.className = 'calendar-emotion-icon';
+            
+            // その日の感情を集計（最も多い感情を表示）
+            const emotions = dayDiaries.map(diary => diary.emotion_analysis).filter(Boolean);
+            if (emotions.length > 0) {
+                const emotionCounts = {};
+                emotions.forEach(emotion => {
+                    emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+                });
+                const mostCommonEmotion = Object.keys(emotionCounts).reduce((a, b) => 
+                    emotionCounts[a] > emotionCounts[b] ? a : b
+                );
+                
+                emotionIcon.innerHTML = getEmotionIcon(mostCommonEmotion);
+                emotionIcon.setAttribute('data-emotion', mostCommonEmotion);
+                emotionIcon.setAttribute('data-emotion-text', getEmotionText(mostCommonEmotion));
+                emotionIcon.setAttribute('data-diary-count', dayDiaries.length);
+                
+                // 感情に応じた色を設定
+                const emotionColors = {
+                    1: '#ff6b6b', // とても悲しい - 赤
+                    2: '#4ecdc4', // 悲しい - 青緑
+                    3: '#45b7d1', // 普通 - 青
+                    4: '#96ceb4', // 嬉しい - 薄緑
+                    5: '#feca57'  // とても嬉しい - 黄色
+                };
+                emotionIcon.style.color = emotionColors[mostCommonEmotion] || '#666';
+                
+                dayElement.appendChild(emotionIcon);
+            }
+        }
+        
+        dayElement.textContent = currentDate.getDate();
+        calendarGrid.appendChild(dayElement);
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
     
-    // 日記の日付を整理
-    const diaryDates = {};
-    diaries.forEach(diary => {
+    // 感情チャートセクションを追加
+    addEmotionChartSection(diaries, year, month);
+}
+
+// 感情チャートセクションを追加
+function addEmotionChartSection(diaries, year, month) {
+    const calendarContainer = document.querySelector('.diary-calendar');
+    
+    // 既存の感情チャートセクションを削除
+    const existingChartSection = document.getElementById('emotion-chart-section');
+    if (existingChartSection) {
+        existingChartSection.remove();
+    }
+    
+    // 感情チャートセクションを作成
+    const chartSection = document.createElement('div');
+    chartSection.id = 'emotion-chart-section';
+    chartSection.className = 'emotion-chart-section';
+    
+    // 感情統計を計算
+    const emotionStats = calculateEmotionStats(diaries, year, month);
+    
+    chartSection.innerHTML = `
+        <div class="emotion-chart-header">
+            <h4><i class="fas fa-chart-line"></i> 感情分析</h4>
+            <button id="toggle-emotion-chart" class="btn small-btn">
+                <i class="fas fa-chart-bar"></i> チャート表示
+            </button>
+        </div>
+        <div class="emotion-stats-summary">
+            <div class="emotion-stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">最も多い感情</span>
+                    <span class="stat-value">${emotionStats.mostCommonEmotion}</span>
+                </div>
+            </div>
+            <div class="emotion-stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">平均感情スコア</span>
+                    <span class="stat-value">${emotionStats.averageScore.toFixed(1)}/5.0</span>
+                </div>
+            </div>
+            <div class="emotion-stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">投稿日数</span>
+                    <span class="stat-value">${emotionStats.diaryDays}日</span>
+                </div>
+            </div>
+        </div>
+        <div id="emotion-chart-content" class="emotion-chart-content hidden">
+            <div class="emotion-chart">
+                <canvas id="emotion-chart-canvas"></canvas>
+            </div>
+        </div>
+    `;
+    
+    calendarContainer.appendChild(chartSection);
+    
+    // チャート表示切り替えボタンのイベントリスナー
+    const toggleBtn = document.getElementById('toggle-emotion-chart');
+    const chartContent = document.getElementById('emotion-chart-content');
+    
+    toggleBtn.addEventListener('click', () => {
+        const isHidden = chartContent.classList.contains('hidden');
+        if (isHidden) {
+            chartContent.classList.remove('hidden');
+            toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> チャート非表示';
+            renderEmotionChart(emotionStats);
+        } else {
+            chartContent.classList.add('hidden');
+            toggleBtn.innerHTML = '<i class="fas fa-chart-bar"></i> チャート表示';
+        }
+    });
+}
+
+// 感情統計を計算
+function calculateEmotionStats(diaries, year, month) {
+    // 指定月の日記をフィルタリング
+    const monthDiaries = diaries.filter(diary => {
         const diaryDate = new Date(diary.created_at);
-        if (diaryDate.getMonth() === currentMonth && diaryDate.getFullYear() === currentYear) {
-            const day = diaryDate.getDate();
-            diaryDates[day] = true;
+        return diaryDate.getFullYear() === year && 
+               diaryDate.getMonth() === month &&
+               diary.emotion_analysis;
+    });
+    
+    if (monthDiaries.length === 0) {
+        return {
+            emotionCounts: {},
+            mostCommonEmotion: 'データなし',
+            averageScore: 0,
+            diaryDays: 0
+        };
+    }
+    
+    // 感情の出現回数をカウント
+    const emotionCounts = {};
+    let totalScore = 0;
+    const diaryDays = new Set();
+    
+    monthDiaries.forEach(diary => {
+        const emotion = diary.emotion_analysis;
+        if (emotion && !isNaN(emotion)) {
+            emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+            totalScore += parseInt(emotion);
+            
+            const diaryDate = new Date(diary.created_at);
+            diaryDays.add(diaryDate.toDateString());
         }
     });
     
-    // 前月の空白セルを追加
-    for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-day empty';
-        calendarGrid.appendChild(emptyCell);
+    // 最も多い感情を特定
+    const mostCommonEmotion = Object.keys(emotionCounts).length > 0 
+        ? Object.keys(emotionCounts).reduce((a, b) => 
+            emotionCounts[a] > emotionCounts[b] ? a : b
+          )
+        : 'データなし';
+    
+    const averageScore = totalScore > 0 ? totalScore / monthDiaries.length : 0;
+    
+    return {
+        emotionCounts,
+        mostCommonEmotion: mostCommonEmotion !== 'データなし' ? getEmotionText(mostCommonEmotion) : 'データなし',
+        averageScore,
+        diaryDays: diaryDays.size
+    };
+}
+
+// 感情チャートを描画
+function renderEmotionChart(emotionStats) {
+    const canvas = document.getElementById('emotion-chart-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // キャンバスサイズを設定
+    canvas.width = canvas.offsetWidth;
+    canvas.height = 200;
+    
+    const emotionLabels = {
+        1: 'とても悲しい',
+        2: '悲しい', 
+        3: '普通',
+        4: '嬉しい',
+        5: 'とても嬉しい'
+    };
+    
+    const emotionColors = {
+        1: '#ff6b6b',
+        2: '#4ecdc4', 
+        3: '#45b7d1',
+        4: '#96ceb4',
+        5: '#feca57'
+    };
+    
+    const data = [];
+    const labels = [];
+    const colors = [];
+    
+    // データを準備
+    for (let i = 1; i <= 5; i++) {
+        const count = emotionStats.emotionCounts[i] || 0;
+        data.push(count);
+        labels.push(emotionLabels[i]);
+        colors.push(emotionColors[i]);
     }
     
-    // 日付セルを追加
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayCell = document.createElement('div');
-        dayCell.className = 'calendar-day';
-        dayCell.textContent = day;
+    // チャートを描画
+    const maxValue = Math.max(...data);
+    const barWidth = canvas.width / data.length - 20;
+    const barHeight = canvas.height - 60;
+    
+    // 背景をクリア
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // バーを描画
+    data.forEach((value, index) => {
+        const x = index * (barWidth + 20) + 10;
+        const height = maxValue > 0 ? (value / maxValue) * barHeight : 0;
+        const y = canvas.height - 40 - height;
         
-        // 日記がある日はクラスを追加
-        if (diaryDates[day]) {
-            dayCell.classList.add('has-diary');
-        }
+        // バーを描画
+        ctx.fillStyle = colors[index];
+        ctx.fillRect(x, y, barWidth, height);
         
-        // 今日の日付にはクラスを追加
-        if (day === now.getDate() && currentMonth === now.getMonth() && currentYear === now.getFullYear()) {
-            dayCell.classList.add('today');
-        }
+        // 値を表示
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Klee One';
+        ctx.textAlign = 'center';
+        ctx.fillText(value, x + barWidth / 2, y - 5);
         
-        calendarGrid.appendChild(dayCell);
-    }
+        // ラベルを表示
+        ctx.fillText(labels[index], x + barWidth / 2, canvas.height - 10);
+    });
 }
 
 // 日記詳細の表示
@@ -605,28 +837,17 @@ async function fetchAndDisplayMonthlyFeedback(year, month) {
     }
 }
 
-// 月ごとのフィードバックセクションの初期化
+// 月ごとのフィードバックセクションを初期化
 async function initMonthlyFeedbackSection() {
-    const monthlyFeedbackSection = document.getElementById('monthly-feedback-section');
-    const getMonthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
-    const monthlyFeedbackContainer = document.getElementById('monthly-feedback-container');
-    const monthlyFeedbackLoading = document.getElementById('monthly-feedback-loading-state');
-
-    // 初期状態にリセット
-    getMonthlyFeedbackBtn.classList.remove('hidden');
-    monthlyFeedbackContainer.classList.add('hidden');
-    monthlyFeedbackLoading.classList.add('hidden');
-    getMonthlyFeedbackBtn.disabled = false;
-
-    // 現在のカレンダー年月を取得
     const year = currentCalendarDate.getFullYear();
     const month = currentCalendarDate.getMonth() + 1;
-
+    
     // ボタンに年月を設定
-    getMonthlyFeedbackBtn.setAttribute('data-year', year);
-    getMonthlyFeedbackBtn.setAttribute('data-month', month);
-
-    // 既存のフィードバックがないか確認
+    const monthlyFeedbackBtn = document.getElementById('get-monthly-feedback-btn');
+    monthlyFeedbackBtn.setAttribute('data-year', year);
+    monthlyFeedbackBtn.setAttribute('data-month', month);
+    
+    // 既存の月ごとフィードバックがないか確認
     await fetchAndDisplayMonthlyFeedback(year, month);
 }
 
@@ -1003,7 +1224,13 @@ function formatTime(seconds) {
 
 // 感情分析結果に対応する顔文字アイコンを取得
 function getEmotionIcon(emotion) {
+    // 数値ベースの感情分析に対応
     const emotionIcons = {
+        1: '😢', // とても悲しい
+        2: '😔', // 悲しい
+        3: '😐', // 普通
+        4: '🙂', // 嬉しい
+        5: '😄', // とても嬉しい
         'very_happy': '😄',
         'happy': '🙂',
         'normal': '😐',
@@ -1015,7 +1242,13 @@ function getEmotionIcon(emotion) {
 
 // 感情分析結果の日本語表示名を取得
 function getEmotionText(emotion) {
+    // 数値ベースの感情分析に対応
     const emotionTexts = {
+        1: 'とても悲しい',
+        2: '悲しい',
+        3: '普通',
+        4: '嬉しい',
+        5: 'とても嬉しい',
         'very_happy': 'とても幸せ',
         'happy': '幸せ',
         'normal': '普通',

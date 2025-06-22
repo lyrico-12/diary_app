@@ -438,6 +438,11 @@ body {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
+    position: relative;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .calendar-day:hover {
@@ -1028,11 +1033,198 @@ body {
 }
 
 .emotion-stat {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    margin-left: 10px;
 }
 
 .emotion-icon {
     font-size: 1.2em;
+    margin-left: 5px;
+}
+
+/* カレンダー内の感情アイコン */
+.calendar-emotion-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.8em;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.calendar-emotion-icon:hover {
+    transform: scale(1.5);
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 感情チャートセクション */
+.emotion-chart-section {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.emotion-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.emotion-chart-header h4 {
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.emotion-chart-content {
+    transition: all 0.3s ease;
+}
+
+.emotion-stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--bg-color) 0%, #f0f8ff 100%);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.emotion-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary-color);
+}
+
+.emotion-stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    border-radius: 50%;
+    font-size: 1.2em;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.emotion-chart {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#emotion-chart-canvas {
+    width: 100%;
+    height: 200px;
+    border-radius: 5px;
+}
+
+/* 感情アイコンのツールチップ */
+.calendar-emotion-icon::after {
+    content: attr(data-emotion-text) ' (' attr(data-diary-count) '件)';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.calendar-emotion-icon:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .emotion-stats-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .emotion-stat-item {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .stat-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1em;
+    }
+    
+    .emotion-chart-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .emotion-chart-header button {
+        width: 100%;
+    }
+    
+    .calendar-emotion-icon {
+        font-size: 0.7em;
+        width: 14px;
+        height: 14px;
+    }
 }
