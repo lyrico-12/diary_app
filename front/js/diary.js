@@ -370,10 +370,16 @@ async function fetchAndDisplayFeedback(diaryId) {
             if (feedback && feedback.content) {
                 displayFeedback(feedback.content);
             }
-        } 
+        } else if (response.status === 404) {
+            // フィードバックが存在しない場合は静かに処理（エラーログを出力しない）
+            return;
+        } else {
+            // その他のエラーの場合のみログを出力
+            console.error('Error fetching feedback:', response.status, response.statusText);
+        }
     } catch (error) {
-        // 既存フィードバックがない場合はボタンが表示されたままになるので、ここではエラーログのみ
-        console.error('Error fetching existing feedback:', error);
+        // ネットワークエラーなどの場合のみログを出力
+        console.error('Network error fetching feedback:', error);
     }
 }
 
@@ -432,9 +438,15 @@ function pollForFeedback(diaryId) {
                     document.getElementById('feedback-loading-state').classList.add('hidden');
                     return;
                 }
+            } else if (response.status === 404) {
+                // フィードバックがまだ生成されていない場合は静かに処理（エラーログを出力しない）
+                return;
+            } else {
+                // その他のエラーの場合のみログを出力
+                console.error('Polling error:', response.status, response.statusText);
             }
         } catch (error) {
-            console.error('Polling error:', error);
+            console.error('Network error during polling:', error);
         }
 
         if (attempts >= maxAttempts) {
@@ -511,9 +523,15 @@ function pollForMonthlyFeedback(year, month) {
                     document.getElementById('monthly-feedback-loading-state').classList.add('hidden');
                     return;
                 }
+            } else if (response.status === 404) {
+                // 月ごとフィードバックがまだ生成されていない場合は静かに処理（エラーログを出力しない）
+                return;
+            } else {
+                // その他のエラーの場合のみログを出力
+                console.error('Monthly feedback polling error:', response.status, response.statusText);
             }
         } catch (error) {
-            console.error('Monthly feedback polling error:', error);
+            console.error('Network error during monthly feedback polling:', error);
         }
 
         if (attempts >= maxAttempts) {
@@ -549,10 +567,16 @@ async function fetchAndDisplayMonthlyFeedback(year, month) {
             if (feedback && feedback.content) {
                 displayMonthlyFeedback(feedback.content);
             }
-        } 
+        } else if (response.status === 404) {
+            // 月ごとフィードバックが存在しない場合は静かに処理（エラーログを出力しない）
+            return;
+        } else {
+            // その他のエラーの場合のみログを出力
+            console.error('Error fetching monthly feedback:', response.status, response.statusText);
+        }
     } catch (error) {
-        // 既存フィードバックがない場合はボタンが表示されたままになるので、ここではエラーログのみ
-        console.error('Error fetching existing monthly feedback:', error);
+        // ネットワークエラーなどの場合のみログを出力
+        console.error('Network error fetching monthly feedback:', error);
     }
 }
 
