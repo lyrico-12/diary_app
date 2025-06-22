@@ -506,6 +506,46 @@ body {
     display: inline-block;
 }
 
+.diary-friend-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: rgba(106, 90, 205, 0.1);
+    border-radius: 8px;
+}
+
+.diary-friend-avatar {
+    flex-shrink: 0;
+}
+
+.diary-friend-avatar .profile-image,
+.diary-friend-avatar .profile-image-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.diary-friend-avatar .profile-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.diary-friend-info .diary-friend-name {
+    margin: 0;
+    padding: 0;
+    background: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
 .diary-author {
     color: var(--text-light);
     font-size: 0.9em;
@@ -1060,6 +1100,47 @@ body {
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid var(--border-color);
+}
+
+/* フレンド日記モーダル内のスタイル */
+.friend-diaries-modal-content .diary-friend-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: rgba(106, 90, 205, 0.1);
+    border-radius: 8px;
+}
+
+.friend-diaries-modal-content .diary-friend-avatar {
+    flex-shrink: 0;
+}
+
+.friend-diaries-modal-content .diary-friend-avatar .profile-image,
+.friend-diaries-modal-content .diary-friend-avatar .profile-image-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.friend-diaries-modal-content .diary-friend-avatar .profile-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.friend-diaries-modal-content .diary-friend-info .diary-friend-name {
+    margin: 0;
+    padding: 0;
+    background: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9em;
 }
 
 /* レスポンシブデザイン */

@@ -162,6 +162,9 @@ function showFriendDiariesModal(diaries, friendId, friendName) {
         width: 90%;
     `;
     
+    // メインCSSのスタイルを継承するためのクラスを追加
+    modalContent.className = 'friend-diaries-modal-content';
+    
     modalContent.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>${friendName}の日記</h2>
@@ -231,8 +234,12 @@ function createDiaryCard(diary) {
     
     let cardHTML = '';
     
-    // フレンドのユーザー名をタイトルの上に表示
-    cardHTML += `<div style="color: #6a5acd; font-weight: 600; font-size: 0.9em; margin-bottom: 8px; padding: 4px 8px; background-color: rgba(106, 90, 205, 0.1); border-radius: 4px; display: inline-block;">👤 ${authorName}</div>`;
+    // フレンドのユーザー名とプロフィール画像をタイトルの上に表示
+    const friendProfileImage = createProfileImage(diary.user, 'small');
+    cardHTML += `<div class="diary-friend-info">
+        <div class="diary-friend-avatar">${friendProfileImage.innerHTML}</div>
+        <div class="diary-friend-name">${authorName}</div>
+    </div>`;
     
     cardHTML += `
         <div style="margin-bottom: 10px;">

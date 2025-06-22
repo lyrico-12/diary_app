@@ -122,9 +122,13 @@ function createDiaryCard(diary) {
     // カード内容
     let cardContent = '';
     
-    // フレンドの日記の場合はユーザー名をタイトルの上に表示
+    // フレンドの日記の場合はユーザー名とプロフィール画像をタイトルの上に表示
     if (isFriendDiary) {
-        cardContent += `<div class="diary-friend-name">👤 ${authorText}</div>`;
+        const friendProfileImage = createProfileImage(diary.user, 'small');
+        cardContent += `<div class="diary-friend-info">
+            <div class="diary-friend-avatar">${friendProfileImage.innerHTML}</div>
+            <div class="diary-friend-name">${authorText}</div>
+        </div>`;
     }
     
     cardContent += `
