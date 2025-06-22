@@ -834,6 +834,22 @@ body {
     margin-top: 10px;
 }
 
+/* 月ごとのフィードバックセクション */
+.monthly-feedback-section {
+    margin-top: 20px;
+    text-align: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.monthly-feedback-section .feedback-container {
+    margin-top: 15px;
+    background-color: #fff3cd; /* 明るい黄色系の背景色 */
+    border-left: 4px solid #ffc107; /* 黄色のアクセントボーダー */
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
     .diary-feed {

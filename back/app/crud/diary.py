@@ -196,3 +196,11 @@ def delete_diary(db: Session, diary_id: int, user_id: int):
     db.delete(diary)
     db.commit()
     return True
+
+def get_user_diaries_by_period(db: Session, user_id: int, start_date: datetime, end_date: datetime):
+    """指定された期間のユーザーの日記を取得する"""
+    return db.query(Diary).filter(
+        Diary.user_id == user_id,
+        Diary.created_at >= start_date,
+        Diary.created_at < end_date
+    ).order_by(Diary.created_at.asc()).all()

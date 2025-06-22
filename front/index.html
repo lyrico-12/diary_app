@@ -112,6 +112,20 @@
                         <div class="calendar-grid" id="calendar-grid">
                             <!-- カレンダーはJSで動的に生成 -->
                         </div>
+                        
+                        <!-- 月ごとのフィードバック機能 -->
+                        <div id="monthly-feedback-section" class="monthly-feedback-section">
+                            <div id="monthly-feedback-container" class="feedback-container hidden">
+                                <h4>今月の振り返り</h4>
+                                <p id="monthly-feedback-content"></p>
+                            </div>
+                            <button id="get-monthly-feedback-btn" class="btn btn-secondary">
+                                <i class="fas fa-calendar-alt"></i> 今月の振り返りをもらう
+                            </button>
+                            <p id="monthly-feedback-loading-state" class="feedback-loading hidden">
+                                月ごとフィードバックを生成中です...
+                            </p>
+                        </div>
                     </div>
 
                     <div id="my-diary-list" class="diary-list">
