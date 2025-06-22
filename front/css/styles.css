@@ -199,22 +199,34 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--card-bg);
+    position: relative;
+    background-color: white;
+    /* 白い背景を復元 */
+    border-bottom: 1px solid var(--border-color);
+    /* 下線を復元 */
     padding: 10px 20px;
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    /* 上下左右の余白を復元 */
 }
 
 .nav-brand {
     font-size: 1.3em;
-    font-weight: 600;
-    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    margin-left: 0.5em;
+    margin-right: auto;
+}
+
+.nav-logo {
+    height: 2.2em;
+    width: 2.2em;
 }
 
 .nav-links {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
+    gap: 20px;
 }
 
 .nav-link {
@@ -241,6 +253,7 @@ body {
 .nav-user {
     display: flex;
     align-items: center;
+    position: relative;
 }
 
 #user-name {
@@ -268,6 +281,12 @@ body {
 #streak-count {
     margin-right: 15px;
     color: var(--accent-color);
+}
+
+#nav-notifications {
+    position: relative;
+    margin-right: 10px;
+    /* ユーザーネームの左に配置 */
 }
 
 /* コンテンツエリア */
@@ -785,8 +804,10 @@ body {
 
 /* フィードバックコンテナ */
 .feedback-container {
-    background-color: #f0f8ff; /* 明るい青系の背景色 */
-    border-left: 4px solid #4a90e2; /* 左側のアクセントボーダー */
+    background-color: #f0f8ff;
+    /* 明るい青系の背景色 */
+    border-left: 4px solid #4a90e2;
+    /* 左側のアクセントボーダー */
     padding: 15px;
     margin-top: 20px;
     border-radius: 5px;
@@ -860,6 +881,21 @@ body {
         width: 100%;
         justify-content: space-around;
     }
+
+    .nav-brand {
+        order: 0;
+        /* 元の順序に戻す */
+        width: auto;
+        text-align: left;
+        margin: 0;
+    }
+
+    .nav-logo {
+        display: none;
+    }
+
+
+
 
     .nav-link {
         margin: 0 5px;
