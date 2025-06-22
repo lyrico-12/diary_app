@@ -150,6 +150,7 @@ function createDiaryCard(diary) {
                 <span>制限時間: ${formatTime(diary.time_limit_sec)}</span>
             </div>
         </div>
+        ${diary.emotion_analysis ? `<div class="emotion-indicator" title="${getEmotionText(diary.emotion_analysis)}">${getEmotionIcon(diary.emotion_analysis)}</div>` : ''}
     `;
     
     card.innerHTML += cardContent;
@@ -190,6 +191,7 @@ function createDiaryListItem(diary) {
                 <span><i class="fas fa-eye"></i> ${diary.view_count}</span>
                 <span><i class="fas fa-heart"></i> ${diary.like_count}</span>
             </div>
+            ${diary.emotion_analysis ? `<div class="emotion-indicator" title="${getEmotionText(diary.emotion_analysis)}">${getEmotionIcon(diary.emotion_analysis)}</div>` : ''}
         </div>
     `;
     
@@ -297,6 +299,18 @@ async function viewDiaryDetail(diaryId) {
         // ルールを表示
         document.getElementById('detail-time-limit').textContent = formatTime(diary.time_limit_sec);
         document.getElementById('detail-char-limit').textContent = diary.char_limit === 0 ? '無制限' : `${diary.char_limit}文字`;
+
+        // 感情分析結果を表示
+        const emotionElement = document.getElementById('detail-emotion');
+        if (diary.emotion_analysis && emotionElement) {
+            emotionElement.innerHTML = `
+                <span class="emotion-icon">${getEmotionIcon(diary.emotion_analysis)}</span>
+                <span class="emotion-text">${getEmotionText(diary.emotion_analysis)}</span>
+            `;
+            emotionElement.classList.remove('hidden');
+        } else if (emotionElement) {
+            emotionElement.classList.add('hidden');
+        }
 
         // 自分の日記の場合のみ削除ボタンを表示
         const deleteBtn = document.getElementById('delete-diary-btn');
@@ -974,6 +988,30 @@ function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}分${remainingSeconds > 0 ? remainingSeconds + '秒' : ''}`;
+}
+
+// 感情分析結果に対応する顔文字アイコンを取得
+function getEmotionIcon(emotion) {
+    const emotionIcons = {
+        'very_happy': '😄',
+        'happy': '🙂',
+        'normal': '😐',
+        'unhappy': '😔',
+        'very_unhappy': '😢'
+    };
+    return emotionIcons[emotion] || '😐';
+}
+
+// 感情分析結果の日本語表示名を取得
+function getEmotionText(emotion) {
+    const emotionTexts = {
+        'very_happy': 'とても幸せ',
+        'happy': '幸せ',
+        'normal': '普通',
+        'unhappy': '悲しい',
+        'very_unhappy': 'とても悲しい'
+    };
+    return emotionTexts[emotion] || '普通';
 }
 
 // 日記関連のイベントリスナー設定

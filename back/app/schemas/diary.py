@@ -26,6 +26,7 @@ class DiaryResponse(DiaryBase):
     like_count: int
     time_limit_sec: int
     char_limit: int
+    emotion_analysis: Optional[str] = None  # 感情分析結果
     created_at: datetime
     is_viewable: bool
     

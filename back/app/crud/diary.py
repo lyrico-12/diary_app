@@ -6,6 +6,7 @@ from ..models.diary import Diary, DiaryLike, Feedback
 from ..models.user import User
 from ..schemas.diary import DiaryCreate
 from .user import update_streak
+from ..services.gemini_service import analyze_emotion_from_diary
 
 def get_diary(db: Session, diary_id: int):
     """日記IDで日記を取得する"""
@@ -102,13 +103,17 @@ def get_specific_friend_diaries(db: Session, friend_id: int, skip: int = 0, limi
 
 def create_diary(db: Session, diary: DiaryCreate, user_id: int):
     """新しい日記を作成する"""
+    # 感情分析を実行
+    emotion_result = analyze_emotion_from_diary(diary.content)
+    
     db_diary = Diary(
         user_id=user_id,
         title=diary.title,
         content=diary.content,
         time_limit_sec=diary.time_limit_sec,
         char_limit=diary.char_limit,
-        view_limit_duration_sec=diary.view_limit_duration_sec
+        view_limit_duration_sec=diary.view_limit_duration_sec,
+        emotion_analysis=emotion_result
     )
     db.add(db_diary)
     db.commit()

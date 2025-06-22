@@ -17,6 +17,7 @@ class Diary(Base):
     view_limit_duration_sec = Column(Integer)  # 公開後の閲覧可能時間
     view_count = Column(Integer, default=0)
     like_count = Column(Integer, default=0)
+    emotion_analysis = Column(String, nullable=True)  # 感情分析結果: 'very_happy', 'happy', 'normal', 'unhappy', 'very_unhappy'
     created_at = Column(DateTime, default=func.now())
     
     # リレーションシップ
