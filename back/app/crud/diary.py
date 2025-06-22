@@ -55,7 +55,7 @@ def get_friend_diaries(db: Session, user_id: int, friend_ids: List[int], skip: i
         if is_viewable:
             # ユーザー情報が読み込まれているか確認
             if diary.user:
-                print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username}, タイトル: {diary.title}, is_viewable: {is_viewable}")
+                print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username}, タイトル: {diary.title}, is_viewable: {is_viewable}, プロフィール画像: {diary.user.profile_image_url}")
             else:
                 print(f"警告: 日記ID {diary.id} のユーザー情報が取得できませんでした")
             viewable_diaries.append(diary)
@@ -87,7 +87,7 @@ def get_specific_friend_diaries(db: Session, friend_id: int, skip: int = 0, limi
         if is_viewable:
             # ユーザー情報が読み込まれているか確認
             if diary.user:
-                print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username}, タイトル: {diary.title}, is_viewable: {is_viewable}")
+                print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username}, タイトル: {diary.title}, is_viewable: {is_viewable}, プロフィール画像: {diary.user.profile_image_url}")
             else:
                 print(f"警告: 日記ID {diary.id} のユーザー情報が取得できませんでした")
             viewable_diaries.append(diary)

@@ -5,6 +5,7 @@ from typing import Optional, List
 class UserInfo(BaseModel):
     id: int
     username: str
+    profile_image_url: Optional[str] = Field(None, description="Base64エンコードされた画像データまたは画像URL")
     
     class Config:
         from_attributes = True

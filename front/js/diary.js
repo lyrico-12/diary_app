@@ -44,6 +44,7 @@ async function loadDiaryFeed() {
             console.log(`フレンド日記 ${index + 1}:`, diary);
             console.log(`フレンド日記 ${index + 1} のユーザー情報:`, diary.user);
             console.log(`フレンド日記 ${index + 1} のユーザー名:`, diary.user?.username);
+            console.log(`フレンド日記 ${index + 1} のプロフィール画像:`, diary.user?.profile_image_url);
             const card = createDiaryCard(diary);
             feedContainer.appendChild(card);
         });

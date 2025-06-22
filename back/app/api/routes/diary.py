@@ -76,9 +76,10 @@ def read_friend_diaries(
     
     # 各日記の詳細情報をログ出力
     for diary in diaries:
-        print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username if diary.user else 'Unknown'}, タイトル: {diary.title}, is_viewable: {diary.is_viewable}")
+        print(f"日記詳細 - ID: {diary.id}, ユーザー: {diary.user.username if diary.user else 'Unknown'}, タイトル: {diary.title}, is_viewable: {diary.is_viewable}, プロフィール画像: {diary.user.profile_image_url}")
     
     print(f"=== フレンド日記取得完了 ===")
+    print(f"diaries: {diaries}")
     return diaries
 
 @router.get("/friend/{friend_id}", response_model=List[DiaryResponse])
