@@ -77,7 +77,7 @@ async function loadMyDiaries() {
                    diaryDate.getMonth() === currentCalendarDate.getMonth();
         });
         
-        // カレンダーを生成（感情アイコン付き）
+        // カレンダーを生成
         generateCalendar(
             currentCalendarDate.getFullYear(),
             currentCalendarDate.getMonth() + 1,
@@ -204,68 +204,94 @@ function createDiaryListItem(diary) {
     return listItem;
 }
 
-// カレンダーの更新
-function updateCalendar(diaries) {
+// カレンダーの日付セルを作成
+function createCalendarDay(date, hasDiary) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    dayElement.setAttribute('data-date', date.toISOString().split('T')[0]);
+    
+    // 今日の日付かチェック
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+        dayElement.classList.add('today');
+    }
+    
+    // 日記がある場合のスタイル
+    if (hasDiary) {
+        dayElement.classList.add('has-diary');
+    }
+    
+    // 日付を表示
+    dayElement.textContent = date.getDate();
+    
+    // クリックイベント
+    dayElement.addEventListener('click', () => {
+        if (hasDiary) {
+            // 日記がある場合の処理（必要に応じて実装）
+            console.log('日記がある日がクリックされました:', date.toISOString().split('T')[0]);
+        }
+    });
+    
+    return dayElement;
+}
+
+// カレンダーを生成
+function generateCalendar(year, month, diaries) {
     const calendarGrid = document.getElementById('calendar-grid');
-    const currentMonth = currentCalendarDate.getMonth();
-    const currentYear = currentCalendarDate.getFullYear();
-    const now = new Date();
+    const calendarTitle = document.getElementById('calendar-title');
     
-    // カレンダーのタイトル更新
-    document.getElementById('calendar-title').textContent = `${currentYear}年${currentMonth + 1}月`;
+    if (!calendarGrid || !calendarTitle) return;
     
-    // カレンダーグリッドをクリア
+    // タイトルを更新
+    calendarTitle.textContent = `${year}年${month}月`;
+    
+    // カレンダーをクリア
     calendarGrid.innerHTML = '';
     
     // 曜日ヘッダーを追加
-    const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
-    daysOfWeek.forEach(day => {
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    weekdays.forEach(day => {
         const dayHeader = document.createElement('div');
         dayHeader.className = 'calendar-day-header';
         dayHeader.textContent = day;
         calendarGrid.appendChild(dayHeader);
     });
     
-    // 月の最初の日の曜日を取得
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    // 月の最初の日を取得
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
     
-    // 月の日数を取得
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-    // 日記の日付を整理
-    const diaryDates = {};
-    diaries.forEach(diary => {
-        const diaryDate = new Date(diary.created_at);
-        if (diaryDate.getMonth() === currentMonth && diaryDate.getFullYear() === currentYear) {
-            const day = diaryDate.getDate();
-            diaryDates[day] = true;
-        }
-    });
-    
-    // 前月の空白セルを追加
-    for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-day empty';
-        calendarGrid.appendChild(emptyCell);
+    // 前月の日付を追加（最初の週を埋めるため）
+    const firstDayOfWeek = firstDay.getDay();
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        const prevDate = new Date(year, month - 1, -i);
+        const dayElement = createCalendarDay(prevDate, false);
+        dayElement.style.opacity = '0.3';
+        calendarGrid.appendChild(dayElement);
     }
     
-    // 日付セルを追加
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayCell = document.createElement('div');
-        dayCell.className = 'calendar-day';
-        dayCell.textContent = day;
+    // 当月の日付を追加
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month - 1, day);
+        const dateString = date.toISOString().split('T')[0];
         
-        // 日記がある日はクラスを追加
-        if (diaryDates[day]) {
-            dayCell.classList.add('has-diary');
-        }
+        // その日の日記を探す
+        const dayDiary = diaries.find(diary => {
+            const diaryDate = new Date(diary.created_at);
+            return diaryDate.toISOString().split('T')[0] === dateString;
+        });
         
-        // 今日の日付にはクラスを追加
-        if (day === now.getDate() && currentMonth === now.getMonth() && currentYear === now.getFullYear()) {
-            dayCell.classList.add('today');
-        }
-        
-        calendarGrid.appendChild(dayCell);
+        const dayElement = createCalendarDay(date, !!dayDiary);
+        calendarGrid.appendChild(dayElement);
+    }
+    
+    // 翌月の日付を追加（最後の週を埋めるため）
+    const lastDayOfWeek = lastDay.getDay();
+    for (let i = 1; i <= 6 - lastDayOfWeek; i++) {
+        const nextDate = new Date(year, month, i);
+        const dayElement = createCalendarDay(nextDate, false);
+        dayElement.style.opacity = '0.3';
+        calendarGrid.appendChild(dayElement);
     }
 }
 
@@ -1121,48 +1147,6 @@ function getEmotionScore(emotion) {
     return emotionScores[emotion] || 3;
 }
 
-// カレンダーの日付セルを作成（感情アイコン付き）
-function createCalendarDay(date, hasDiary, diaryData = null) {
-    const dayElement = document.createElement('div');
-    dayElement.className = 'calendar-day';
-    dayElement.setAttribute('data-date', date.toISOString().split('T')[0]);
-    
-    // 今日の日付かチェック
-    const today = new Date();
-    if (date.toDateString() === today.toDateString()) {
-        dayElement.classList.add('today');
-    }
-    
-    // 日記がある場合のスタイル
-    if (hasDiary) {
-        dayElement.classList.add('has-diary');
-    }
-    
-    // 日付ヘッダー
-    const dayHeader = document.createElement('div');
-    dayHeader.className = 'calendar-day-header';
-    dayHeader.textContent = date.getDate();
-    dayElement.appendChild(dayHeader);
-    
-    // 感情アイコンを追加
-    if (diaryData && diaryData.emotion_analysis) {
-        const emotionIcon = document.createElement('div');
-        emotionIcon.className = 'calendar-emotion';
-        emotionIcon.textContent = getEmotionIcon(diaryData.emotion_analysis);
-        emotionIcon.style.color = getEmotionColor(diaryData.emotion_analysis);
-        dayElement.appendChild(emotionIcon);
-    }
-    
-    // クリックイベント
-    dayElement.addEventListener('click', () => {
-        if (hasDiary && diaryData) {
-            viewDiaryDetail(diaryData.id);
-        }
-    });
-    
-    return dayElement;
-}
-
 // 感情サマリーを生成
 function generateEmotionSummary(diaries) {
     const summaryContainer = document.getElementById('emotion-summary');
@@ -1218,69 +1202,4 @@ function generateEmotionSummary(diaries) {
             <div class="emotion-summary-count">${diaries.length}日</div>
         </div>
     `;
-}
-
-// カレンダーを生成（感情アイコン付き）
-function generateCalendar(year, month, diaries) {
-    const calendarGrid = document.getElementById('calendar-grid');
-    const calendarTitle = document.getElementById('calendar-title');
-    
-    if (!calendarGrid || !calendarTitle) return;
-    
-    // タイトルを更新
-    calendarTitle.textContent = `${year}年${month}月`;
-    
-    // カレンダーをクリア
-    calendarGrid.innerHTML = '';
-    
-    // 曜日ヘッダーを追加
-    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-    weekdays.forEach(day => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'calendar-day-header';
-        dayHeader.textContent = day;
-        dayHeader.style.fontWeight = 'bold';
-        dayHeader.style.textAlign = 'center';
-        dayHeader.style.padding = '10px';
-        dayHeader.style.backgroundColor = '#f8f9fa';
-        dayHeader.style.border = '1px solid var(--border-color)';
-        calendarGrid.appendChild(dayHeader);
-    });
-    
-    // 月の最初の日を取得
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    
-    // 前月の日付を追加（最初の週を埋めるため）
-    const firstDayOfWeek = firstDay.getDay();
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-        const prevDate = new Date(year, month - 1, -i);
-        const dayElement = createCalendarDay(prevDate, false);
-        dayElement.style.opacity = '0.3';
-        calendarGrid.appendChild(dayElement);
-    }
-    
-    // 当月の日付を追加
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-        const date = new Date(year, month - 1, day);
-        const dateString = date.toISOString().split('T')[0];
-        
-        // その日の日記を探す
-        const dayDiary = diaries.find(diary => {
-            const diaryDate = new Date(diary.created_at);
-            return diaryDate.toISOString().split('T')[0] === dateString;
-        });
-        
-        const dayElement = createCalendarDay(date, !!dayDiary, dayDiary);
-        calendarGrid.appendChild(dayElement);
-    }
-    
-    // 翌月の日付を追加（最後の週を埋めるため）
-    const lastDayOfWeek = lastDay.getDay();
-    for (let i = 1; i <= 6 - lastDayOfWeek; i++) {
-        const nextDate = new Date(year, month, i);
-        const dayElement = createCalendarDay(nextDate, false);
-        dayElement.style.opacity = '0.3';
-        calendarGrid.appendChild(dayElement);
-    }
 }
