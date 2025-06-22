@@ -301,13 +301,26 @@ async function viewDiaryDetail(diaryId) {
 
         // 感情分析結果を表示
         const emotionElement = document.getElementById('detail-emotion');
-        if (diary.emotion_analysis && emotionElement) {
-            emotionElement.innerHTML = `
-                <span class="emotion-icon">${getEmotionIcon(diary.emotion_analysis)}</span>
-            `;
-            emotionElement.classList.remove('hidden');
-        } else if (emotionElement) {
-            emotionElement.classList.add('hidden');
+        const emotionLargeElement = document.getElementById('detail-emotion-large');
+        
+        if (diary.emotion_analysis) {
+            // 大きな感情分析アイコンを表示
+            if (emotionLargeElement) {
+                emotionLargeElement.innerHTML = getEmotionIcon(diary.emotion_analysis);
+                emotionLargeElement.classList.remove('hidden');
+            }
+            // 小さな感情分析アイコンは非表示
+            if (emotionElement) {
+                emotionElement.classList.add('hidden');
+            }
+        } else {
+            // 感情分析がない場合は両方とも非表示
+            if (emotionLargeElement) {
+                emotionLargeElement.classList.add('hidden');
+            }
+            if (emotionElement) {
+                emotionElement.classList.add('hidden');
+            }
         }
 
         // 自分の日記の場合のみ削除ボタンを表示
