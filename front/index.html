@@ -112,19 +112,42 @@
                         <div class="calendar-grid" id="calendar-grid">
                             <!-- カレンダーはJSで動的に生成 -->
                         </div>
-                        
-                        <!-- 月ごとのフィードバック機能 -->
-                        <div id="monthly-feedback-section" class="monthly-feedback-section">
-                            <div id="monthly-feedback-container" class="feedback-container hidden">
-                                <h4>今月の振り返り</h4>
-                                <p id="monthly-feedback-content"></p>
-                            </div>
-                            <button id="get-monthly-feedback-btn" class="btn btn-secondary">
-                                <i class="fas fa-calendar-alt"></i> 今月の振り返りをもらう
+                    </div>
+
+                    <!-- 月ごとのフィードバック機能 -->
+                    <div id="monthly-feedback-section" class="monthly-feedback-section">
+                        <div id="monthly-feedback-container" class="feedback-container hidden">
+                            <h4>今月の振り返り</h4>
+                            <p id="monthly-feedback-content"></p>
+                        </div>
+                        <button id="get-monthly-feedback-btn" class="btn btn-secondary">
+                            <i class="fas fa-calendar-alt"></i> 今月の振り返りをもらう
+                        </button>
+                        <p id="monthly-feedback-loading-state" class="feedback-loading hidden">
+                            月ごとフィードバックを生成中です...
+                        </p>
+                    </div>
+
+                    <!-- 感情チャートセクション -->
+                    <div class="emotion-chart-section">
+                        <div class="emotion-chart-header">
+                            <h3 class="emotion-chart-title">今月の感情の変化</h3>
+                            <button id="emotion-chart-toggle" class="emotion-chart-toggle">
+                                <i class="fas fa-chart-bar"></i> チャート表示
                             </button>
-                            <p id="monthly-feedback-loading-state" class="feedback-loading hidden">
-                                月ごとフィードバックを生成中です...
-                            </p>
+                        </div>
+                        
+                        <div id="emotion-chart-container" class="emotion-chart-container">
+                            <div id="emotion-chart" class="emotion-chart">
+                                <!-- 感情チャートはJSで動的に生成 -->
+                            </div>
+                            <div id="emotion-legend" class="emotion-legend">
+                                <!-- 凡例はJSで動的に生成 -->
+                            </div>
+                        </div>
+                        
+                        <div id="emotion-summary" class="emotion-summary">
+                            <!-- 感情統計サマリーはJSで動的に生成 -->
                         </div>
                     </div>
 

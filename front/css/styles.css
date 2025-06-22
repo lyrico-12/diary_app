@@ -430,34 +430,226 @@ body {
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 1px;
+    background-color: var(--border-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
 }
 
 .calendar-day {
-    text-align: center;
+    position: relative;
     padding: 10px;
-    border-radius: 5px;
+    border: 1px solid var(--border-color);
     cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--card-bg);
 }
 
 .calendar-day:hover {
-    background-color: rgba(106, 90, 205, 0.1);
+    background-color: #f8f9fa;
 }
 
 .calendar-day.has-diary {
+    background-color: #e8f4fd;
+    border-color: var(--primary-color);
+}
+
+.calendar-day.today {
     background-color: var(--primary-light);
     color: white;
 }
 
-.calendar-day.today {
-    border: 2px solid var(--accent-color);
+.calendar-day-header {
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 5px;
 }
 
-.calendar-day-header {
+/* 感情アイコンのスタイル */
+.calendar-emotion {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 1.2em;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.calendar-day:hover .calendar-emotion {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* 感情の色分け */
+.emotion-very-happy { color: #ff6b6b; }
+.emotion-happy { color: #4ecdc4; }
+.emotion-normal { color: #45b7d1; }
+.emotion-unhappy { color: #96ceb4; }
+.emotion-very-unhappy { color: #feca57; }
+
+/* 月ごとのフィードバックセクション */
+.monthly-feedback-section {
+    margin-top: 20px;
     text-align: center;
-    padding: 5px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.monthly-feedback-section .feedback-container {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.monthly-feedback-section .btn-secondary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Klee One', sans-serif;
     font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.monthly-feedback-section .btn-secondary:hover {
+    background-color: var(--primary-dark);
+}
+
+/* 感情チャートセクション */
+.emotion-chart-section {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.emotion-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.emotion-chart-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.emotion-chart-toggle {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 5px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+.emotion-chart-toggle:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.emotion-chart-container {
+    display: none;
+    margin-top: 15px;
+}
+
+.emotion-chart-container.active {
+    display: block;
+}
+
+.emotion-chart {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    height: 120px;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 10px;
+}
+
+.emotion-bar {
+    flex: 1;
+    margin: 0 2px;
+    border-radius: 5px 5px 0 0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.emotion-bar:hover {
+    opacity: 0.8;
+    transform: scaleY(1.05);
+}
+
+.emotion-bar-label {
+    text-align: center;
+    font-size: 0.8em;
+    margin-top: 5px;
     color: var(--text-light);
+}
+
+.emotion-legend {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.emotion-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8em;
+}
+
+.emotion-legend-icon {
+    font-size: 1.2em;
+}
+
+/* 感情統計サマリー */
+.emotion-summary {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.emotion-summary-item {
+    text-align: center;
+}
+
+.emotion-summary-icon {
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.emotion-summary-label {
+    font-size: 0.8em;
+    color: var(--text-light);
+    margin-bottom: 3px;
+}
+
+.emotion-summary-count {
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 /* 日記リスト */
@@ -465,6 +657,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
 }
 
 .diary-list-item {
@@ -853,22 +1048,6 @@ body {
     font-style: italic;
     color: #666;
     margin-top: 10px;
-}
-
-/* 月ごとのフィードバックセクション */
-.monthly-feedback-section {
-    margin-top: 20px;
-    text-align: center;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 10px;
-    border: 1px solid #e9ecef;
-}
-
-.monthly-feedback-section .feedback-container {
-    margin-top: 15px;
-    background-color: #fff3cd; /* 明るい黄色系の背景色 */
-    border-left: 4px solid #ffc107; /* 黄色のアクセントボーダー */
 }
 
 /* レスポンシブデザイン */
