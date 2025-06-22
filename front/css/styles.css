@@ -431,6 +431,26 @@ body {
     align-items: center;
 }
 
+/* ナビゲーションバーのプロフィール画像 */
+#nav-user-profile {
+    margin-right: 10px;
+    margin-top: 3px; /* プロフィール画像を少し下にずらす */
+}
+
+#nav-user-profile .profile-image,
+#nav-user-profile .profile-image-placeholder {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--border-color);
+}
+
+#nav-user-profile .profile-image-placeholder {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 #user-name {
     margin-right: 15px;
     font-weight: 600;
